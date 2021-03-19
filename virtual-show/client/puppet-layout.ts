@@ -22,9 +22,8 @@ const PuppetLayout = {
             }
 			::slotted(div) {
 				width: 90vw;
-				height: 95vh;
-				background-color: #f7dbff;
-				border-radius: 40px;
+				height: 90vh;
+				background-color: #f0f0f0;
 			}
         </style>
 		<slot name="content">

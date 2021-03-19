@@ -47,3 +47,4 @@ bundle.js
 __pycache__
 logs/*
 virtual-show/server/target/*
+virtual-show/server/log.txt

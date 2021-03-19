@@ -36,22 +36,21 @@ const LAST_EXPLAINED:usize = 2;
 const CONTROLLER_TIMEOUT:Duration = Duration::from_secs(600);
 const TYPING_TIMEOUT:Duration = Duration::from_secs(2);
 
+struct PupState {
+    connected: Vec<u8>,
+    positions: Vec<u8>,
+    names: Vec<String>,
+    actions: Vec<bool>
+}
 
 struct ServerState {
     soft_admin: Option<Sender>,
-    soft_controller: Option<Sender>,
-    soft_avatar: Option<Sender>,
     tokens: HashMap<Token, u8>,
+    puppeteers: HashMap<u8, Sender>,
     game: Option<JoinHandle<()>>,
     game_tx: Option<mpsc::Sender<Vec<u8>>>,
     comm_tx: mpsc::Sender<Vec<u8>>,
-    pic_state: Vec<u8>,
-    pic_key: String,
-    soft_controller_name: Option<String>,
-    soft_controller_last_action: SystemTime,
-    sc_token : Option<Token>,
-    soft_controller_typing: bool,
-    soft_controller_last_typing: SystemTime
+    pup_state: PupState
 }
 
 
@@ -64,59 +63,19 @@ struct Server {
    motor_tx: mpsc::Sender<Vec<u8>>
 }
 
-struct Foo {
-    a: i32,
-    b: i32
-}
 
-fn send_pic_state(state: &ServerState) {
-    println!("Sending pic state");
+fn send_pup_state(state: &ServerState, sender: &Sender) {
+    println!("Sending puppet state");
     let json_command = format!("U{{
-        \"command\": \"pic-state\",
+        \"command\": \"puppet-state\",
         \"state\": {{
-            \"CONTROL\": {},
-            \"AVATAR\": {},
-            \"key\" : \"{}\"
+            \"connected\": \"{}\"
         }}
     }}
-    ", state.pic_state[0], state.pic_state[1], state.pic_key);
+    ","BLAH");
 
-    if let Some(sc) = &state.soft_controller {
-        sc.send(json_command.as_bytes());
-    }
-    if let Some(sa) = &state.soft_avatar {
-        sa.send(json_command.as_bytes());
-    }
-}
 
-fn send_softbot_state(state: &ServerState) {
-    println!("Sending softbot state");
-    let controller_name = match state.soft_controller_name {
-        Some(ref name) => name,
-        None => ""
-    };
-    let json_command = format!("U{{
-        \"command\": \"softbot-state\",
-        \"state\": {{
-            \"CONTROL\": {},
-            \"AVATAR\": {},
-            \"softControllerName\" : \"{}\",
-            \"softControllerTyping\" : {}
-        }}
-    }}
-    ", 
-    if state.soft_controller.is_some() { '1' } else { '0' },
-    if state.soft_avatar.is_some() { '1' } else { '0' },
-    controller_name,
-    if state.soft_controller_typing { "true" } else { "false" },
-    );
-
-    if let Some(sc) = &state.soft_controller {
-        sc.send(json_command.as_bytes());
-    }
-    if let Some(sa) = &state.soft_avatar {
-        sa.send(json_command.as_bytes());
-    }
+    sender.broadcast(json_command.as_bytes());
 }
 
 fn handle_message(
@@ -136,46 +95,26 @@ fn handle_message(
         match role {
             0 ..= 2 => {
                 {
-                    let targets = [
-                        &mut state.soft_controller,
-                        &mut state.soft_avatar,
-                        &mut state.soft_admin
-                    ];
-                    if let Some(soft_target) = targets[role as usize] {
+                    if let Some(soft_target) = state.puppeteers.get(&role) {
                         return Err(SoftError::new("There is already a controller connected. Please try again later!"));
                     } else {
-                        *(targets[role as usize]) =  Some(server.ws.clone());
                          state.tokens.insert(server.ws.token(), role);
-                         println!("Registration successful");
-                         if role as usize == AVATAR_ROLE {
-                             if let Some(sc) = targets[0] {
-                                 println!("Notifying controller");
-                                 sc.send("IAvatar connected!").unwrap();
-                             }
-                            if let Some(sa) = targets[2] {
-                                println!("Notifying admin");
-                                sa.send("IAvatar connected!").unwrap();
-                            }
-                        } 
-                         else if role as usize == CONTROL_ROLE {
-                             state.soft_controller_name = Some(str::from_utf8(&data[2..]).unwrap().to_string());
-                              if let Some(sc) = targets[0] {
-                                 println!("Notifying controller");
-                                 sc.send("IYou are now in control of Hitodama.").unwrap();
-                              }
+                         state.puppeteers.insert(
+                             role,
+                             server.ws.clone()
+                         );
+                         state.pup_state.names[role as usize] = str::from_utf8(&data[2..]).unwrap().to_string();
 
-                              state.soft_controller_last_action = SystemTime::now();
-                              state.sc_token = Some(server.ws.token());
-                         }
+                         println!("Registration successful");
                     }
                 }
-                send_pic_state(state);
-                send_softbot_state(state);
+                send_pup_state(state, &server.ws);
             }
 
             _ => return Err(SoftError::new("Unknown role"))
         }
     }
+    /*
     else {
         if let Some(role) = state.tokens.get(&server.ws.token()) {
             if *role as usize == CONTROL_ROLE {
@@ -267,12 +206,6 @@ fn handle_message(
                 }
                 'T' => {
                     println!("Typing!");
-                    state.soft_controller_last_typing = SystemTime::now();
-
-                    if !state.soft_controller_typing {
-                        state.soft_controller_typing = true;
-                        send_softbot_state(state);
-                    }
                 }
                 '>' => {
                     // Send to serial
@@ -284,7 +217,7 @@ fn handle_message(
         } else {
             return Err(SoftError::new("Disconnected. Please refresh and try again."))
         }
-    }
+    }*/
 
     Ok(())
 }
@@ -316,27 +249,14 @@ impl Handler for Server {
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!("Client disconnected! ({:?}, {})",code,reason);
         let state = &mut *self.state.lock().unwrap();
+
         if let Some(role) = state.tokens.get(&self.ws.token()) {
-            let targets = [&mut state.soft_controller,&mut state.soft_avatar, &mut state.soft_admin];
-            if targets[*role as usize] != &mut None {
-                *(targets[*role as usize]) = None;                
-                state.pic_state[*role as usize] = 0;
-                println!("Disconnected from role {:}", role);
-                if *role as usize == AVATAR_ROLE {
-                    if let Some(sc) = targets[0] {
-                        println!("Notifying controller");
-                        sc.send("IAvatar disconnected.").unwrap();
-                    }
-                    state.pic_state[CONTROL_ROLE] = 0;
-                } else if *role as usize == CONTROL_ROLE {
-                    state.pic_state[AVATAR_ROLE] = 0;
-                    state.soft_controller_name = None;                    
-                    state.sc_token = None;
-                }
-            } 
+            println!("Disconnected from role {:}", role);
+            state.puppeteers.remove(role);
         }
-        send_softbot_state(state);
-        state.tokens.remove(&self.ws.token());
+
+        send_pup_state(state, &self.ws);
+        state.tokens.remove(&self.ws.token()); 
     }
 }
 
@@ -350,73 +270,31 @@ pub fn start(
 
     let (comm_out, comm_in) = channel();
 
-    let mut pic_state = vec![0,0,0];
+    let pup_state = PupState {
+        connected: vec![0; 10],
+        positions: vec![5,95, 0,0,0,0,0,0,0,0],
+        names: vec![String::new(); 10],
+        actions: vec![false; 10]
+    };
 
     let state = Arc::new(Mutex::new(ServerState {
-        soft_controller: None,
         soft_admin: None,
-        soft_avatar: None,
         tokens: HashMap::new(),
+        puppeteers: HashMap::new(),
         game: None,
         game_tx: None,
         comm_tx: comm_out.clone(),
-        pic_state : pic_state,
-        pic_key : String::new(),
-        soft_controller_name : None,
-        soft_controller_last_action: UNIX_EPOCH,
-        sc_token : None,
-        soft_controller_typing: false,
-        soft_controller_last_typing: UNIX_EPOCH
+        pup_state : pup_state,
     }));
 
     let comm_state = state.clone();
 
-    let sensing_state = state.clone();
-
-    let sensing_thread = thread::spawn(move || {
-        while let Ok(mut msg) = sensing_rx.recv() {
-            let command = msg[0] as char;
-            match(command) {
-                'S' => {
-                    let state = & sensing_state.lock().unwrap();
-                    match msg[1] as char {
-                        'A' => {
-                            println!("Arm sensing message! {}", String::from_utf8(msg.clone()).unwrap());
-                            if let Some(sa) = & state.soft_avatar {
-                               sa.send(msg.clone()).unwrap();
-                            }
-                            if let Some(sc) = & state.soft_controller {
-                               sc.send(msg.clone()).unwrap();
-                            }
-                        }
-                        'P' => {
-                       //    println!("Pressure sensing message!");
-                            if let Some(sa) = & state.soft_admin {
-                               sa.send(msg).unwrap();
-                            }
-                        }
-                        _ => {
-                            println!("Unknown sensing message! {}", msg[1]);
-                        }
-                    }
-                }
-                'D' => {
-                    let state = & sensing_state.lock().unwrap();
-                    println!("Debug message!");
-                    if let Some(sa) = & state.soft_admin {
-                       sa.send(msg).unwrap();
-                    }
-                }
-                _ => {
-                    println!("Unknown sensing command! {}",command);
-                }
-            }
-        }
-    }); 
     let timeout_state = state.clone();
+
     let timeout_thread = thread::spawn(move || {
         loop {
             {
+                /*
                 let mut state =  &mut *timeout_state.lock().unwrap();
                 let mut state_changed:bool = false;
                 {
@@ -454,7 +332,7 @@ pub fn start(
                 }
                 if (state_changed) {
                     send_softbot_state(state);
-                }
+                } */
             }
             thread::sleep(Duration::from_secs(1));
         }

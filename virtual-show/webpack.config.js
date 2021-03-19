@@ -2,9 +2,7 @@ const path = require("path");
 const webpack = require('webpack');
 
 module.exports = {
-  entry: {
-        "client": ["./client","webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000"],
-  },
+  entry: './client',
   devtool: 'inline-source-map',
   resolve: {
     extensions: [ '.tsx', '.ts', '.js' ],
@@ -12,7 +10,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "public"),
     publicPath: '/',
-    filename: "[name]-bundle.js",
+    filename: "bundle.js",
   },
   mode: "development",
   devServer: {

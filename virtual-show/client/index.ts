@@ -12,7 +12,11 @@ define('puppet-layout', PuppetLayout);
 define('puppet-root', PuppetRoot);
 
 console.log("Loading client");
-const socketController = new SocketController('ws://127.0.0.1:3012',() => store.dispatch(setSocketController(socketController, true)));
+const socketController = new SocketController('ws://127.0.0.1:3012',() => {
+  store.dispatch(setSocketController(socketController, true))
+  socketController.send("R" + String.fromCharCode(0) + "Avner");
+});
+
 socketController.init();
 
 store.dispatch(setIdentity(ROLES.CONTROLLER));

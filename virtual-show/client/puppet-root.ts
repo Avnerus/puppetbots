@@ -1,5 +1,9 @@
-import { html, render } from 'hybrids';
+import { html, render, define } from 'hybrids';
 import store, {connect} from '../common/state'
+
+import { PuppetTheater } from './puppet-theater'
+
+define('puppet-theater', PuppetTheater);
 
 const PuppetRoot =  {
     phase: connect(store, (state) => state.phase),
@@ -12,7 +16,7 @@ const PuppetRoot =  {
 				height: 100%;
 			}
 		</style>
-      <h1>Hello world</h1>
+      <puppet-theater></puppet-theater>
      `, {shadowRoot :true})
 }
 
