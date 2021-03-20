@@ -9,9 +9,10 @@ const PuppetAvatar =  {
 		<style>
       #avatar {
         position: absolute;
-        bottom: 80px;
+        left: ${puppetState[identity] ? puppetState[identity].position[0] : 0}%;
+        bottom: ${puppetState[identity] ? puppetState[identity].position[1] : 0}%;
         height: 250px;
-        display: flex;
+        display: ${(puppetState[identity] && puppetState[identity].connected) ? 'flex' : 'none'};
       }
 		</style>
       <div id="avatar">

@@ -14,6 +14,9 @@ use std::collections::HashMap;
 use std::sync::mpsc::channel;
 use std::time::{SystemTime, UNIX_EPOCH, Duration};
 
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+
 use soft_error::SoftError;
 use Config;
 use game;
@@ -36,11 +39,12 @@ const LAST_EXPLAINED:usize = 2;
 const CONTROLLER_TIMEOUT:Duration = Duration::from_secs(600);
 const TYPING_TIMEOUT:Duration = Duration::from_secs(2);
 
-struct PupState {
-    connected: Vec<u8>,
-    positions: Vec<u8>,
-    names: Vec<String>,
-    actions: Vec<bool>
+#[derive(Serialize, Deserialize)]
+struct Puppet {
+    connected: bool,
+    position: Vec<u8>,
+    name: String,
+    action: bool
 }
 
 struct ServerState {
@@ -50,7 +54,7 @@ struct ServerState {
     game: Option<JoinHandle<()>>,
     game_tx: Option<mpsc::Sender<Vec<u8>>>,
     comm_tx: mpsc::Sender<Vec<u8>>,
-    pup_state: PupState
+    pup_state: HashMap<u8, Puppet>
 }
 
 
@@ -66,16 +70,12 @@ struct Server {
 
 fn send_pup_state(state: &ServerState, sender: &Sender) {
     println!("Sending puppet state");
-    let json_command = format!("U{{
-        \"command\": \"puppet-state\",
-        \"state\": {{
-            \"connected\": \"{}\"
-        }}
-    }}
-    ","BLAH");
+    let json_command = json!({
+        "command": "puppet-state",
+        "state": state.pup_state
+    });
 
-
-    sender.broadcast(json_command.as_bytes());
+    sender.broadcast((String::from("U") + &json_command.to_string()).as_bytes());
 }
 
 fn handle_message(
@@ -103,8 +103,19 @@ fn handle_message(
                              role,
                              server.ws.clone()
                          );
-                         state.pup_state.names[role as usize] = str::from_utf8(&data[2..]).unwrap().to_string();
-
+                         state.pup_state.insert (
+                             role,
+                             Puppet {
+                                connected: true,
+                                position: match role {
+                                    1 => vec![5,5],
+                                    2 => vec![80,5],
+                                    _ => vec![0,0]
+                                },
+                                name: str::from_utf8(&data[2..]).unwrap().to_string(),
+                                action: false
+                             }
+                         );
                          println!("Registration successful");
                     }
                 }
@@ -228,6 +239,8 @@ impl Handler for Server {
         println!("Client connected!");
         let token = self.ws.token();
         println!("Client token: {:?}", token);
+        let state = &*self.state.lock().unwrap();
+        send_pup_state(state, &self.ws);
         Ok(())
     }
     fn on_message(&mut self, msg: Message) -> ws::Result<()> {
@@ -253,6 +266,7 @@ impl Handler for Server {
         if let Some(role) = state.tokens.get(&self.ws.token()) {
             println!("Disconnected from role {:}", role);
             state.puppeteers.remove(role);
+            state.pup_state.remove(role);
         }
 
         send_pup_state(state, &self.ws);
@@ -270,13 +284,6 @@ pub fn start(
 
     let (comm_out, comm_in) = channel();
 
-    let pup_state = PupState {
-        connected: vec![0; 10],
-        positions: vec![5,95, 0,0,0,0,0,0,0,0],
-        names: vec![String::new(); 10],
-        actions: vec![false; 10]
-    };
-
     let state = Arc::new(Mutex::new(ServerState {
         soft_admin: None,
         tokens: HashMap::new(),
@@ -284,7 +291,7 @@ pub fn start(
         game: None,
         game_tx: None,
         comm_tx: comm_out.clone(),
-        pup_state : pup_state,
+        pup_state : HashMap::new()
     }));
 
     let comm_state = state.clone();

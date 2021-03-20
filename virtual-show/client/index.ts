@@ -12,9 +12,15 @@ define('puppet-layout', PuppetLayout);
 define('puppet-root', PuppetRoot);
 
 console.log("Loading client");
+
+const urlParams = new URLSearchParams(window.location.search);
+const puppeteer = urlParams.get('puppeteer');
+
 const socketController = new SocketController('ws://127.0.0.1:3012',() => {
   store.dispatch(setSocketController(socketController, true))
-  socketController.send("R" + String.fromCharCode(0) + "Avner");
+  if (puppeteer) {
+    socketController.send("R" + String.fromCharCode(Number(puppeteer)) + "Puppeteer " + puppeteer);
+  }
 });
 
 socketController.init();

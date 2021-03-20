@@ -39,7 +39,7 @@ const reducer = (state = {
         return {...state, socketController: action.socketController}
     }
     case 'SET_PUPPET_STATE' : {
-        return {...state, softbotState : action.value}
+        return {...state, puppetState : action.value}
     }
     case 'SET_LISTENER' : {
         console.log("Set listener", action.value);
