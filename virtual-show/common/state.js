@@ -15,6 +15,7 @@ export const OTHER = {
 const reducer = (state = {
     identity: null,
     socketController: null,
+    keyboard:  null,
     listener: null,
     puppetState: {
     },
@@ -40,6 +41,25 @@ const reducer = (state = {
     }
     case 'SET_PUPPET_STATE' : {
         return {...state, puppetState : action.value}
+    }
+    case 'SET_KEYBOARD' : {
+        console.log("Set keyboard", action.value);
+        const keyboard = action.value; 
+        keyboard.onPress(39, () => {
+          store.dispatch(keyPress(39));
+        });
+        return {...state, keyboard}
+    }
+    case 'KEY_PRESS': {
+      const keyCode = action.value
+      const puppetState = {...state.puppetState};
+      if (keyCode == 39) {
+        console.log("Right!", state.identity, state.puppetState)
+        if (state.identity && puppetState[state.identity]) {
+          puppetState[state.identity].position[0] += 1;
+        }
+      }
+      return {...state, puppetState}
     }
     case 'SET_LISTENER' : {
         console.log("Set listener", action.value);
@@ -78,6 +98,15 @@ export const setListener = (value) => ({
     value
 })
 
+export const setKeyboard = (value) => ({
+    type: 'SET_KEYBOARD',
+    value
+}) 
+
+export const keyPress = (value) => ({
+  type: 'KEY_PRESS',
+  value
+})
 
 export const setIdentity = (value) => ({
     type: 'SET_IDENTITY',

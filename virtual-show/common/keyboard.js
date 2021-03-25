@@ -1,4 +1,4 @@
-export default class {
+class Keyboard {
     constructor() {
         this.keys = {};
     }
@@ -6,29 +6,33 @@ export default class {
 
     }
     grab() {
-        window.addEventListener(
+        document.body.addEventListener(
           "keydown", (event) => {
             this.downHandler(event);
             event.preventDefault();
         });
-        window.addEventListener(
+        document.body.addEventListener(
           "keyup", (event) => {
             this.upHandler(event);
             event.preventDefault();
         });
     }
     downHandler(event) {
-        if (this.keys[event.keyCode] && this.keys[event.keyCode].press && !this.keys[event.keyCode].isDown) {
+        if (this.keys[event.keyCode]) {
             this.keys[event.keyCode].isDown = true;
             this.keys[event.keyCode].isUp = false;
-            this.keys[event.keyCode].press();
+            if (this.keys[event.keyCode].press) {
+              this.keys[event.keyCode].press();
+            }
         } 
     }
     upHandler(event) {
-        if (this.keys[event.keyCode] && this.keys[event.keyCode].release && !this.keys[event.keyCode].isUp) {
+        if (this.keys[event.keyCode] &&  !this.keys[event.keyCode].isUp) {
             this.keys[event.keyCode].isDown = false;
             this.keys[event.keyCode].isUp = true;
-            this.keys[event.keyCode].release();
+            if (this.keys[event.keyCode].release) {
+              this.keys[event.keyCode].release();
+            }
         } 
     }
     onPress(keyCode, callback) {
@@ -36,7 +40,6 @@ export default class {
             this.keys[keyCode] = {};
         }
         this.keys[keyCode].press = callback;
-        console.log(this.keys);
     }
 
     onRelease(keyCode, callback) {
@@ -46,3 +49,5 @@ export default class {
         this.keys[keyCode].release = callback;
     }
 }
+
+export { Keyboard }
