@@ -21,10 +21,6 @@ use soft_error::SoftError;
 use Config;
 use game;
 
-const CONTROL_ROLE : usize = 0;
-const AVATAR_ROLE : usize = 1;
-const ADMIN_ROLE : usize = 2;
-
 const  WAITING:u8 =  0;
 const  READY:u8 = 1;
 const  CHOSE_1:u8 = 2;
@@ -108,8 +104,8 @@ fn handle_message(
                              Puppet {
                                 connected: true,
                                 position: match role {
-                                    1 => vec![5,5],
-                                    2 => vec![80,5],
+                                    1 => vec![105,105],
+                                    2 => vec![180,105],
                                     _ => vec![0,0]
                                 },
                                 name: str::from_utf8(&data[2..]).unwrap().to_string(),
@@ -125,110 +121,28 @@ fn handle_message(
             _ => return Err(SoftError::new("Unknown role"))
         }
     }
-    /*
     else {
         if let Some(role) = state.tokens.get(&server.ws.token()) {
-            if *role as usize == CONTROL_ROLE {
-                state.soft_controller_last_action = SystemTime::now();
-            }
             match command {
                 'S' => {
-                    // Start command
+                    // app state command
                     let app = str::from_utf8(&data[1..4]).unwrap();
-                    println!("Start app {:?}", app);
-                    if app == "BRK" {
-                        println!("Start breakout!");
-                        // Check that both players are here
-                        if let (Some(sc), Some(sa)) = (&state.soft_controller, &state.soft_avatar) {
-                                let breakout_config = Arc::clone(&server.config);
-                                let (game_tx, game_rx) = mpsc::channel();
-                                state.game_tx = Some(game_tx.clone());
-                                let game_comm = state.comm_tx.clone();
-                                state.game = Some(
-                                    thread::Builder::new().name("game".to_owned()).spawn(move || {
-                                        game::start(
-                                            breakout_config,
-                                            game_rx,
-                                            game_comm
-                                        )
-                                }).unwrap());
-
-                                sc.send("PBREAKOUT").unwrap();
-                                sa.send("PBREAKOUT").unwrap();
-                        }
-                        else {
-                            println!("Can't play with just one player!");
-                            return Err(SoftError::new("Cannot play with just one player"))
-                        }
+                    println!("state command {:?}", app);
+                    if app == "POS" {
+                        let pos_state_x:u8 = data[4];
+                        let pos_state_y:u8 = data[5];
+                        println!("POS State! {:?}", [pos_state_x,pos_state_y]);
+                        (*state.pup_state.get_mut(&role).unwrap()).position[0] = pos_state_x;
+                        (*state.pup_state.get_mut(&role).unwrap()).position[1] = pos_state_y;
+                        send_pup_state(state, &server.ws);
                     }
-                    if app == "PIC" {
-                        let pic_state = data[4];
-                        println!("PIC State! {}", pic_state);
-                        state.pic_state[*role as usize] = pic_state;
-
-                        if state.pic_state[CONTROL_ROLE] == READY &&
-                            state.pic_state[AVATAR_ROLE] == READY {
-                            // Generate a new pic key
-                            let start = SystemTime::now();
-                            let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
-                            state.pic_key = format!("{:?}", since_the_epoch.as_millis());
-                            
-                        }
-                        if
-                            state.pic_state[CONTROL_ROLE] >= CHOSE_1 &&
-                            state.pic_state[CONTROL_ROLE] <= CHOSE_2 && 
-                            state.pic_state[AVATAR_ROLE]  >= CHOSE_1 && 
-                            state.pic_state[AVATAR_ROLE] <= CHOSE_2 {
-                                
-                                println!("Both chose!");
-                                state.pic_state[AVATAR_ROLE] += 2;
-                                state.pic_state[CONTROL_ROLE] += 2;
-                        }
-                        if state.pic_state[CONTROL_ROLE] >= DONE_1 &&
-                           state.pic_state[AVATAR_ROLE] >= DONE_1 {
-                            // Reset!
-                            state.pic_state[CONTROL_ROLE] = WAITING;
-                            state.pic_state[AVATAR_ROLE] = WAITING;
-                        }
-                        send_pic_state(state);
-                    }
-                }
-                'C' => {
-                    println!("Comm message");
-                    // Just send it to the avatar
-                    match role {
-                        0 | 2 => {
-                            if let Some(sa) = &state.soft_avatar {
-                                sa.send(data);
-                            } else {
-                                return Err(SoftError::new("No avatar connected!"))
-                            }
-                        }
-                        1 => {
-                            if let Some(sc) = &state.soft_controller {
-                                sc.send(data);
-                            } else {
-                                return Err(SoftError::new("No controller connected!"))
-                            }
-                        }
-                        _ => {}
-
-                    }
-                }
-                'T' => {
-                    println!("Typing!");
-                }
-                '>' => {
-                    // Send to serial
-                    server.motor_tx.send(data);
-
                 }
                 _ => return Err(SoftError::new("Unknown command"))
             }
         } else {
             return Err(SoftError::new("Disconnected. Please refresh and try again."))
         }
-    }*/
+    }
 
     Ok(())
 }

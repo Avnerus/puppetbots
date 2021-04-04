@@ -12,6 +12,13 @@ export const OTHER = {
     "AVATAR": "CONTROL"
 }
 
+enum Direction {
+  Left = 37,
+  Up = 38 ,
+  Right = 39,
+  Down = 40,
+}
+
 const reducer = (state = {
     identity: null,
     socketController: null,
@@ -26,12 +33,6 @@ const reducer = (state = {
             action.socketController.subscribeToPrefix('E', (msg) => {
                 console.warn(msg.slice(1));
             });
-            action.socketController.subscribeToPrefix('I', (msg) => {
-                store.dispatch(addTranscript({
-                    from: "System",
-                    text: msg.slice(1)
-                }));
-            });
         }
         action.socketController.on('puppet-state', (data) => {
             console.log("New puppet state!", data.state);
@@ -45,19 +46,36 @@ const reducer = (state = {
     case 'SET_KEYBOARD' : {
         console.log("Set keyboard", action.value);
         const keyboard = action.value; 
-        keyboard.onPress(39, () => {
-          store.dispatch(keyPress(39));
-        });
+        for (const direction of [Direction.Left, Direction.Up, Direction.Right, Direction.Down]) {
+          keyboard.onPress(direction, () => {
+            store.dispatch(keyPress(direction));
+          });
+        };
         return {...state, keyboard}
     }
     case 'KEY_PRESS': {
       const keyCode = action.value
       const puppetState = {...state.puppetState};
-      if (keyCode == 39) {
-        console.log("Right!", state.identity, state.puppetState)
-        if (state.identity && puppetState[state.identity]) {
-          puppetState[state.identity].position[0] += 1;
+      if (state.identity && puppetState[state.identity]) {
+        switch (keyCode) {
+          case Direction.Up:
+            puppetState[state.identity].position[1] += 1;
+            break;
+          case Direction.Down:
+            puppetState[state.identity].position[1] -= 1;
+            break;
+          case Direction.Right:
+            puppetState[state.identity].position[0] += 1;
+            break;
+          case Direction.Left:
+            puppetState[state.identity].position[0] -= 1;
+            break;
         }
+        state.socketController.sendValueCommand(
+          "SPOS",
+          puppetState[state.identity].position[0],
+          puppetState[state.identity].position[1]
+        );
       }
       return {...state, puppetState}
     }
@@ -76,6 +94,7 @@ const reducer = (state = {
 // Store instance as default export
 const store = createStore(
   reducer,
+  // @ts-ignore
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(), // redux dev tools
 );
 
