@@ -1,6 +1,6 @@
 import '@webcomponents/webcomponentsjs/webcomponents-bundle.js';
 
-import store, {setSocketController, setListener, setKeyboard, setIdentity, ROLES} from '../common/state'
+import store, {setSocketController, setListener, setKeyboard, setIdentity} from '../common/state'
 
 import { define } from 'hybrids';
 import { PuppetLayout } from './puppet-layout'
@@ -30,8 +30,6 @@ const socketController = new SocketController('ws://127.0.0.1:3012',() => {
 });
 
 socketController.init();
-
-store.dispatch(setIdentity(ROLES.CONTROLLER));
 
 if (module.hot) {
     console.log("We have hot");

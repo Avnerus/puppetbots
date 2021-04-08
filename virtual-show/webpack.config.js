@@ -20,7 +20,8 @@ module.exports = {
       hot: true
   },
   plugins: [
-     new webpack.HotModuleReplacementPlugin()
+     new webpack.HotModuleReplacementPlugin(),
+     new webpack.ProvidePlugin({ adapter: ['webrtc-adapter', 'default'] })
   ],
   module: {
       rules: [
@@ -56,7 +57,14 @@ module.exports = {
                   name: 'assets/[name]-[hash].[ext]'
                 }
               }
-          }
-      ]
+       },
+      {
+          test: require.resolve('janus-gateway'),
+          loader: 'exports-loader',
+           options: {
+             exports: 'Janus',
+           },
+      }
+    ]
   }
 };

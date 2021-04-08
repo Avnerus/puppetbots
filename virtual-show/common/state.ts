@@ -2,16 +2,6 @@ import {createStore} from 'redux';
 
 import SocketController from '../common/socket-controller'
 
-export const ROLES = {
-    CONTROLLER: "CONTROL",
-    AVATAR: "AVATAR"
-}
-
-export const OTHER = {
-    "CONTROL": "AVATAR",
-    "AVATAR": "CONTROL"
-}
-
 enum Direction {
   Left = 37,
   Up = 38 ,
@@ -24,6 +14,7 @@ const reducer = (state = {
     socketController: null,
     keyboard:  null,
     listener: null,
+    audioStream: null,
     puppetState: {
     },
 }, action) => {
@@ -80,11 +71,13 @@ const reducer = (state = {
       return {...state, puppetState}
     }
     case 'SET_LISTENER' : {
-        console.log("Set listener", action.value);
         return {...state, listener : action.value}
     }
     case 'SET_IDENTITY' : {
         return {...state, identity : action.value}
+    }
+    case 'SET_AUDIO_STREAM' : {
+        return {...state, audioStream : action.value}
     }
     default:
       return state;
@@ -129,6 +122,11 @@ export const keyPress = (value) => ({
 
 export const setIdentity = (value) => ({
     type: 'SET_IDENTITY',
+    value
+})
+
+export const setAudioStream = (value) => ({
+    type: 'SET_AUDIO_STREAM',
     value
 })
 

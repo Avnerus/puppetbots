@@ -3157,6 +3157,13 @@ expand-brackets@^2.1.4:
     snapdragon "^0.8.1"
     to-regex "^3.0.1"
 
+exports-loader@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/exports-loader/-/exports-loader-2.0.0.tgz#ca7861b86726997bb4e55001888d2af940935979"
+  integrity sha512-k/VFrVEUmotfkk8vZ+njG5NEXpr5Ee+BonV+AYINV2hNo3o+/UB8nEuCUQk2k6IyWIoobmXoTFO0igxrQcMV4Q==
+  dependencies:
+    source-map "^0.6.1"
+
 express-basic-auth@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/express-basic-auth/-/express-basic-auth-1.2.0.tgz#a1d40b07721376ba916e73571a60969211224808"
@@ -4647,6 +4654,12 @@ isstream@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
+
+janus-gateway@meetecho/janus-gateway:
+  version "0.7.5"
+  resolved "https://codeload.github.com/meetecho/janus-gateway/tar.gz/10ab360e7e3f93d317961e8f73b85814bfaa5b0b"
+  dependencies:
+    webrtc-adapter "7.4.0"
 
 jest-worker@^26.6.2:
   version "26.6.2"
@@ -8773,6 +8786,14 @@ webpack@^5.26.3:
     terser-webpack-plugin "^5.1.1"
     watchpack "^2.0.0"
     webpack-sources "^2.1.1"
+
+webrtc-adapter@7.4.0:
+  version "7.4.0"
+  resolved "https://registry.yarnpkg.com/webrtc-adapter/-/webrtc-adapter-7.4.0.tgz#db7238e9946fed3df2bbcc8a2d3b624bf1d4568b"
+  integrity sha512-YeflMTsqnQ6/7satrJzjzN9RjpkDDsEdoRuEkIhk+oOmWgDL1ocdWhZ1lPdB21ZXXY/AmEih4cHgKoW3SYw20A==
+  dependencies:
+    rtcpeerconnection-shim "^1.2.15"
+    sdp "^2.12.0"
 
 webrtc-adapter@^7.2.4:
   version "7.7.1"
