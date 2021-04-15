@@ -3,6 +3,10 @@
     "server": {
         "port": 3012
     },
+    "ytchat": {
+      "chat_id": "Cg0KC0kxSS0wUFVoRm1VKicKGFVDOFBSQzRWTnk4VllMeTh2LTZLT2p2ZxILSTFJLTBQVWhGbVU",
+      "api_key": "AIzaSyDP_1srROpG4-l5LWIpdBcTzlziiRnonXE"
+    },
     "breakout": {
         "name": "Avner"
     },

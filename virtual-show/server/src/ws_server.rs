@@ -18,6 +18,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use soft_error::SoftError;
+use ytchat::YTChatMessage;
+
 use Config;
 use game;
 
@@ -44,13 +46,10 @@ struct Puppet {
 }
 
 struct ServerState {
-    soft_admin: Option<Sender>,
     tokens: HashMap<Token, u8>,
     puppeteers: HashMap<u8, Sender>,
-    game: Option<JoinHandle<()>>,
-    game_tx: Option<mpsc::Sender<Vec<u8>>>,
-    comm_tx: mpsc::Sender<Vec<u8>>,
-    pup_state: HashMap<u8, Puppet>
+    pup_state: HashMap<u8, Puppet>,
+    ws: Option<Sender>
 }
 
 
@@ -59,8 +58,7 @@ struct Server {
    ws: Sender,
   //  serial: ThreadOut<String>,
    config: Arc<Config>,
-   state: Arc<Mutex<ServerState>>,
-   motor_tx: mpsc::Sender<Vec<u8>>
+   state: Arc<Mutex<ServerState>>
 }
 
 
@@ -190,83 +188,42 @@ impl Handler for Server {
 
 pub fn start(
     config: Arc<Config>,
-    sensing_rx: mpsc::Receiver<Vec<u8>>,
-    motor_tx: mpsc::Sender<Vec<u8>>
+    ytchat_rx: mpsc::Receiver<Vec<YTChatMessage>>
 
 ) {
     println!("\nSpawning server on port {}", config.server.port);
 
-    let (comm_out, comm_in) = channel();
-
     let state = Arc::new(Mutex::new(ServerState {
-        soft_admin: None,
         tokens: HashMap::new(),
         puppeteers: HashMap::new(),
-        game: None,
-        game_tx: None,
-        comm_tx: comm_out.clone(),
-        pup_state : HashMap::new()
+        pup_state : HashMap::new(),
+        ws: None
     }));
 
-    let comm_state = state.clone();
-
-    let timeout_state = state.clone();
-
-    let timeout_thread = thread::spawn(move || {
-        loop {
-            {
-                /*
-                let mut state =  &mut *timeout_state.lock().unwrap();
-                let mut state_changed:bool = false;
-                {
-                    let mut sc_handle = &mut state.soft_controller;
-                    if sc_handle.is_some() {
-                        let timeSinceLastAction = 
-                            SystemTime::now().duration_since(state.soft_controller_last_action).unwrap();
-                        //println!("Time since last action: {:?}" ,timeSinceLastAction);
-                        if timeSinceLastAction > CONTROLLER_TIMEOUT {
-                            state_changed = true;
-                            println!("Time to go!");
-                            {
-                                let sc = sc_handle.as_ref().unwrap();
-                                sc.send("EYou were disconnected due to inactivity. Please refresh to try again.").unwrap();
-                            }
-
-                            *(sc_handle) = None;
-                            if let Some(token) = state.sc_token {
-                                println!("Removing sc token");
-                                state.tokens.remove(&token);
-                            }
-                            state.sc_token = None;
-                            state.soft_controller_name = None;
-                        }
-                        if state.soft_controller_typing {
-                            let timeSinceLastTyping = 
-                                SystemTime::now().duration_since(state.soft_controller_last_typing).unwrap();
-                            if timeSinceLastTyping > TYPING_TIMEOUT {
-                                println!("Stopped typing!");
-                                state.soft_controller_typing = false;
-                                state_changed = true;
-                            }
-                        }
-                    }
-                }
-                if (state_changed) {
-                    send_softbot_state(state);
-                } */
-            }
-            thread::sleep(Duration::from_secs(1));
-        }
-    }); 
-
+   let ytchat_state = state.clone();
+   let ytchat_thread = thread::spawn(move || {
+       while let Ok(mut msg) = ytchat_rx.recv() {
+           println!("Message!");
+           let mut state_mod = &mut ytchat_state.lock().unwrap();
+           if let Some(ws) = &state_mod.ws {
+                let json_command = json!({
+                    "command": "youtube-chat",
+                    "messages": msg
+                });
+                ws.broadcast((String::from("U") + &json_command.to_string()).as_bytes());
+           }
+       }
+   });
 
     listen(("0.0.0.0",config.server.port), move |out| {
         println!("Connection");
-        Server {
+        let server = Server {
             ws: out,
             config: Arc::clone(&config),
-            state: Arc::clone(&state),
-            motor_tx: motor_tx.clone()
-        }
+            state: Arc::clone(&state)
+        };
+        let mut state_mod = &mut state.lock().unwrap();
+        state_mod.ws = Some(server.ws.clone());
+        server
     }).unwrap();
 }

@@ -19,11 +19,13 @@ use std::io::{self, Write};
 
 use argparse::{ArgumentParser, Store};
 use chrono::Local;
+use ytchat::YTChatMessage;
 
 mod soft_error;
 mod breakout_state;
 mod ws_server;
 mod game;
+mod ytchat;
 
 #[derive(Deserialize, Debug)]
 struct ServerConfig {
@@ -31,8 +33,15 @@ struct ServerConfig {
 }
 
 #[derive(Deserialize, Debug)]
+struct YTChatConfig {
+    chat_id: String,
+    api_key: String
+}
+
+#[derive(Deserialize, Debug)]
 pub struct Config {
     server: ServerConfig,
+    ytchat: YTChatConfig,
     version: String
 }
 
@@ -50,22 +59,31 @@ fn main() {
     let config = Arc::new(read_config().unwrap());
     let mut log = File::create("log.txt").unwrap();
 
-    let (sensing_in, sensing_out) = channel();
-    let (motor_in, motor_out): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = channel();
+    let (ytchat_tx, ytchat_rx): (Sender<Vec<YTChatMessage>>, Receiver<Vec<YTChatMessage>>) = channel();
 
     let mut port_name = "".to_string();
     let baud_rate: u32 = 9600;
 
     println!("Starting server");
 
+    // Youtube Chat thread
+    let config_yt = Arc::clone(&config);
+    let ytchat_thread = thread::Builder::new().name("server".to_owned()).spawn(move || {
+        ytchat::start(
+            config_yt,
+            ytchat_tx
+        );
+    }).unwrap();
+
     // Server thread
+    let config_ws = Arc::clone(&config);
     let server = thread::Builder::new().name("server".to_owned()).spawn(move || {
         ws_server::start(
-            Arc::clone(&config),
-            sensing_out,
-            motor_in
+            config_ws,                        
+            ytchat_rx
         );
     }).unwrap();
     
+    let _ = ytchat_thread.join();
     let _ = server.join();
 }

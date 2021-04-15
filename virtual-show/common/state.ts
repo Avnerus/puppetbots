@@ -29,6 +29,9 @@ const reducer = (state = {
             console.log("New puppet state!", data.state);
             store.dispatch(setPuppetState(data.state));
         });
+        action.socketController.on('youtube-chat', (data) => {
+            console.log("Youtube chat!!", data);
+        });
         return {...state, socketController: action.socketController}
     }
     case 'SET_PUPPET_STATE' : {

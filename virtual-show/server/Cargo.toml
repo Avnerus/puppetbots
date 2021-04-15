@@ -15,4 +15,5 @@ serde_derive = {version = "*"}
 serde_json = {version = "*"}
 byteorder = {version = "*"}
 chrono = {version = "*"}
+reqwest = { version = "0.11.3", features = ["json", "blocking"] }
 

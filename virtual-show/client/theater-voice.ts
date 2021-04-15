@@ -1,14 +1,10 @@
 import { html, render, define } from 'hybrids';
-import store, {connect} from '../common/state'
+import store, { connect, setAudioStream } from '../common/state'
 import { PuppetAvatar } from './puppet-avatar'
 
 // Beacause of using webpack exports-loader
 // @ts-ignore
 import { Janus } from 'janus-gateway';
-
-const metadataLoaded = (host, e) => {
-    console.log("Audio metadata loaded!");
-}
 
 const TheaterVoice =  {
     audioStream: connect(store, (state) => state.audioStream),
@@ -62,21 +58,19 @@ const TheaterVoice =  {
                                     if (event === 'joined') {
                                       if (msg["id"]) {
                                         console.log("Successfully joined room " + msg["room"] + " with ID " + msg["id"]);
-                                        if (host.identity) {
-                                          console.log("Creating offer", host.identity)
-                                          host.janusPlugin.createOffer(
-                                          {
-                                            media: { video: false},	// This is an audio only room
-                                            success: function(jsep) {
-                                              console.log("Got SDP!", jsep)
-                                              const publish = { request: "configure", muted: false };
-                                              host.janusPlugin.send({ message: publish, jsep: jsep });
-                                            },
-                                            error: function(error) {
-                                              console.warn("WebRTC error:", error);
-                                            }
-                                          });
-                                        }
+                                        console.log("Creating offer", host.identity)
+                                        host.janusPlugin.createOffer(
+                                        {
+                                          media: { video: false},	// This is an audio only room
+                                          success: function(jsep) {
+                                            console.log("Got SDP!", jsep)
+                                            const publish = { request: "configure", muted: (host.identity ? false: true) };
+                                            host.janusPlugin.send({ message: publish, jsep: jsep });
+                                          },
+                                          error: function(error) {
+                                            console.warn("WebRTC error:", error);
+                                          }
+                                        });
                                       }
                                     }
                                   }
@@ -87,6 +81,11 @@ const TheaterVoice =  {
                                 },
                                 onremotestream: function(stream) {
                                     console.log("Stream available!", stream)
+                                    Janus.attachMediaStream(
+                                      host.shadowRoot.getElementById('voice'),
+                                      stream
+                                    );
+                                   // setAudioStream(stream);
                                 }
                               }
                           )
@@ -107,9 +106,7 @@ const TheaterVoice =  {
     render: render(({ audioStream }) => 
         html`
           <audio 
-              srcObject=${audioStream} 
               id="voice"
-              onloadedmetadata=${metadataLoaded}
               autoplay
           ></video>
      `)
