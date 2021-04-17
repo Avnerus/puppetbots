@@ -21,8 +21,8 @@ const PuppetLayout = {
 				font-family: Roboto;
             }
 			::slotted(div) {
-				width: 95vw;
-				height: 95vh;
+				width: 100vw;
+				height: 100vh;
 				background-color: #f0f0f0;
 			}
         </style>

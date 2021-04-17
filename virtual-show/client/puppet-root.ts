@@ -3,13 +3,14 @@ import store, {connect} from '../common/state'
 
 import { PuppetTheater } from './puppet-theater'
 import { YoutubeChat } from './youtube-chat'
+import { PuppetAction } from './puppet-action'
 
 define('puppet-theater', PuppetTheater);
-define('youtube-chat', YoutubeChat);
+define('puppet-action', PuppetAction);
 
 const PuppetRoot =  {
-    phase: connect(store, (state) => state.phase),
-    render: render(() => 
+    identity: connect(store, (state) => state.identity),
+    render: render(({ identity }) => 
         html`
 		<style>
 			:host {
@@ -20,20 +21,17 @@ const PuppetRoot =  {
       #puppet-container {
         position: relative;
         height: 100%;
-      }
-      youtube-chat {
-        position: absolute;
-        top: 0;
-        z-index: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
       puppet-theater {
-        position: absolute;
-        top: 0;
-        width: 100%;
-        height: 100%;
+        width: 80%;
+        height: 90%;
       }
 		</style>
       <div id="puppet-container">
+        ${identity && html`<puppet-action identity="${identity}"></puppet-action>`}
         <puppet-theater></puppet-theater>
       </div>
      `, {shadowRoot :true})
