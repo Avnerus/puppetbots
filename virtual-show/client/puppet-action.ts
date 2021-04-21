@@ -1,9 +1,8 @@
 import { html, render } from 'hybrids';
-import store, {connect} from '../common/state'
+import store, { connect, setAction} from '../common/state'
 
-const action = () => {
-  console.log("Action!");
-
+const action = (host) => {
+  store.dispatch(setAction(!(host.puppetState[host.identity].action)));
 }
 
 const PuppetAction =  {

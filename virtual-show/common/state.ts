@@ -82,6 +82,17 @@ const reducer = (state = {
     case 'SET_AUDIO_STREAM' : {
         return {...state, audioStream : action.value}
     }
+    case 'SET_ACTION' : {
+      const puppetState = {...state.puppetState};
+      if (state.identity && puppetState[state.identity]) {
+        puppetState[state.identity].action = action.value;
+        state.socketController.sendValueCommand(
+          "SACT",
+          puppetState[state.identity].action
+        );
+      }
+      return {...state}
+    }
     default:
       return state;
   };
@@ -130,6 +141,11 @@ export const setIdentity = (value) => ({
 
 export const setAudioStream = (value) => ({
     type: 'SET_AUDIO_STREAM',
+    value
+})
+
+export const setAction = (value) => ({
+    type: 'SET_ACTION',
     value
 })
 

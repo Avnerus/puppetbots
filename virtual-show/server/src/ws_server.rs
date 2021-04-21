@@ -126,13 +126,22 @@ fn handle_message(
                     // app state command
                     let app = str::from_utf8(&data[1..4]).unwrap();
                     println!("state command {:?}", app);
-                    if app == "POS" {
-                        let pos_state_x:u8 = data[4];
-                        let pos_state_y:u8 = data[5];
-                        println!("POS State! {:?}", [pos_state_x,pos_state_y]);
-                        (*state.pup_state.get_mut(&role).unwrap()).position[0] = pos_state_x;
-                        (*state.pup_state.get_mut(&role).unwrap()).position[1] = pos_state_y;
-                        send_pup_state(state, &server.ws);
+                    match app {
+                        "POS" => {
+                            let pos_state_x:u8 = data[4];
+                            let pos_state_y:u8 = data[5];
+                            println!("POS State! {:?}", [pos_state_x,pos_state_y]);
+                            (*state.pup_state.get_mut(&role).unwrap()).position[0] = pos_state_x;
+                            (*state.pup_state.get_mut(&role).unwrap()).position[1] = pos_state_y;
+                            send_pup_state(state, &server.ws);
+                        },
+                        "ACT" => {
+                            let act:bool = (data[4] == 1);
+                            println!("ACT State! {:?}", act);
+                            (*state.pup_state.get_mut(&role).unwrap()).action = act;
+                            send_pup_state(state, &server.ws);
+                        },
+                        _ => return Err(SoftError::new("Unknown command"))
                     }
                 }
                 _ => return Err(SoftError::new("Unknown command"))

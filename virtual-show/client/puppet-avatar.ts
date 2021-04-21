@@ -1,6 +1,10 @@
 import { html, render } from 'hybrids';
 import store, {connect} from '../common/state'
 
+const getImage = (identity, puppetState) => {
+  return `${(identity)}${(puppetState[identity] && puppetState[identity].action) ? '-action' : ''}`
+}
+
 const PuppetAvatar =  {
     puppetState: connect(store, (state) => state.puppetState),
     identity: "",
@@ -16,7 +20,7 @@ const PuppetAvatar =  {
       }
 		</style>
       <div id="avatar">
-        <img src="assets/avatar-${identity}.png">
+        <img src="assets/avatar-${getImage(identity, puppetState)}.png">
       </div>
      `)
 }
