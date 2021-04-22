@@ -9,9 +9,12 @@ const chatArranger = {
     render: () => html`
         <style>
             :host {
-                overflow: scroll;
-                height: 100%;
-                width: 100%;
+               position: absolute;
+              display: flex;
+              flex-flow: wrap;
+              flex-direction: column;
+              height: 100%;
+              overflow: hidden;
             } 
         </style>
         <slot onslotchange="${arrangeChats}"></slot>
@@ -27,7 +30,6 @@ const YoutubeChat =  {
           <style>
             :host {
               width: 100%;
-              display: block;
               position: absolute;
               top: 0;
               height: 40%;
@@ -44,10 +46,11 @@ const YoutubeChat =  {
               border-color: #27bfb1;
               border-style: solid;
               border-radius: 20px;
+              font-size: 20px;
             }
             .chat-text {
               color: white;
-              margin-right: 10px;
+              margin: 10px;
             }
             .chat-author {
               font-weight: bold;

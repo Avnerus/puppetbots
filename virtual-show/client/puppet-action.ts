@@ -11,7 +11,7 @@ const PuppetAction =  {
     render: render(({puppetState, identity}) => 
         html`
 		<style>
-      #puppet-action {
+      :host {
         position: absolute;
         ${identity == 1 ? 'left' : 'right'}: 3vw;
         bottom: 50vh;
@@ -20,6 +20,7 @@ const PuppetAction =  {
         height: 80px;
         width: 80px;
         z-index: 1;
+        font-size: 20px;
       }
 		</style>
       <div id="puppet-action">
