@@ -14,10 +14,12 @@ const PuppetAction =  {
       #puppet-action {
         position: absolute;
         ${identity == 1 ? 'left' : 'right'}: 3vw;
-        bottom: 40vh;
+        bottom: 50vh;
       }
       input {
-        height: 50px;
+        height: 80px;
+        width: 80px;
+        z-index: 1;
       }
 		</style>
       <div id="puppet-action">

@@ -23,7 +23,7 @@ const PuppetTheater =  {
       </div>
       <theater-voice
           roomId="${9540}"
-          streamURL="${'https://tdialogos.aalto.fi/janus'}"
+          streamURL="${'https://tdialogos.aalto.fi:3478/janus'}"
         >
      `)
 }

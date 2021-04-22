@@ -20,7 +20,10 @@ const puppeteer = urlParams.get('puppeteer');
 const keyboard = new Keyboard();
 
 //const socketController = new SocketController(`ws://${window.location.hostname}:3012`,() => {
-const socketController = new SocketController(`ws://2.tcp.ngrok.io:17264`,() => {
+const socketController = new SocketController(
+  process.env.ENV == 'development' ? 
+  `ws://${window.location.hostname}:3012` : 
+  `wss://${window.location.hostname}/ws`,() => {
   store.dispatch(setSocketController(socketController, true))
   if (puppeteer) {
     store.dispatch(setIdentity(Number(puppeteer)));
