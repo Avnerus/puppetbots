@@ -15,6 +15,7 @@ const reducer = (state = {
     keyboard:  null,
     listener: null,
     audioStream: null,
+    chats: [],
     puppetState: {
     },
 }, action) => {
@@ -31,6 +32,7 @@ const reducer = (state = {
         });
         action.socketController.on('youtube-chat', (data) => {
             console.log("Youtube chat!!", data);
+            store.dispatch(addChats(data.messages));
         });
         return {...state, socketController: action.socketController}
     }
@@ -93,6 +95,9 @@ const reducer = (state = {
       }
       return {...state}
     }
+    case 'ADD_CHATS' : {
+      return {...state, chats: [...state.chats, ...action.value]}
+    }
     default:
       return state;
   };
@@ -146,6 +151,11 @@ export const setAudioStream = (value) => ({
 
 export const setAction = (value) => ({
     type: 'SET_ACTION',
+    value
+})
+
+export const addChats = (value) => ({
+    type: 'ADD_CHATS',
     value
 })
 

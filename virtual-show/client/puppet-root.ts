@@ -7,6 +7,7 @@ import { PuppetAction } from './puppet-action'
 
 define('puppet-theater', PuppetTheater);
 define('puppet-action', PuppetAction);
+define('youtube-chat', YoutubeChat);
 
 const PuppetRoot =  {
     identity: connect(store, (state) => state.identity),
@@ -27,10 +28,11 @@ const PuppetRoot =  {
       }
       puppet-theater {
         width: 80%;
-        height: 90%;
+        height: 94%;
       }
 		</style>
       <div id="puppet-container">
+        <youtube-chat></youtube-chat>
         ${identity && html`<puppet-action identity="${identity}"></puppet-action>`}
         <puppet-theater></puppet-theater>
       </div>

@@ -2,27 +2,66 @@ import { html, render, define } from 'hybrids';
 import store, { connect, setAudioStream } from '../common/state'
 import { PuppetAvatar } from './puppet-avatar'
 
-// Beacause of using webpack exports-loader
-// @ts-ignore
+const arrangeChats = (host, event) => {
+}
+
+const chatArranger = {
+    render: () => html`
+        <style>
+            :host {
+                overflow: scroll;
+                height: 100%;
+                width: 100%;
+            } 
+        </style>
+        <slot onslotchange="${arrangeChats}"></slot>
+    `
+}
+
+define('chat-arranger', chatArranger)
+
 const YoutubeChat =  {
-    id: "",
-    render: ({ id }) => 
+    chats: connect(store, (state) => state.chats),
+    render: ({ chats }) => 
         html`
           <style>
             :host {
               width: 100%;
               display: block;
+              position: absolute;
+              top: 0;
+              height: 40%;
             }
-            #item-scroller {
-              overflow-y: hidden !important;
+            .chat-message {
+              display: flex;
+              max-width: 30%;
+              background-color: #151515bf;
+              margin: 10px;
+              min-height: 15%;
+              align-items: center;
+              color: white;
+              border-width: 2px;
+              border-color: #27bfb1;
+              border-style: solid;
+              border-radius: 20px;
+            }
+            .chat-text {
+              color: white;
+              margin-right: 10px;
+            }
+            .chat-author {
+              font-weight: bold;
+              color: #48ff2e;
+              margin-left: 10px;
+              margin-right: 10px;
             }
           </style>
-          <iframe 
-              width=100%
-              height=200 
-              src="https://www.youtube.com/live_chat?v=${id}&embed_domain=${window.location.hostname}"
-          >
-          </iframe>
+
+          <chat-arranger>
+              ${chats.map(( message ) => html
+                  `<div class="chat-message"><span class="chat-author">${message.author}:</span><span class="chat-text">${message.text}</span></div>
+              `)}
+          </chat-arranger>
      `
 }
 

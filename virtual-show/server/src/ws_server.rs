@@ -102,8 +102,8 @@ fn handle_message(
                              Puppet {
                                 connected: true,
                                 position: match role {
-                                    1 => vec![105,105],
-                                    2 => vec![180,105],
+                                    1 => vec![105,103],
+                                    2 => vec![180,103],
                                     _ => vec![0,0]
                                 },
                                 name: str::from_utf8(&data[2..]).unwrap().to_string(),

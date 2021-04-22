@@ -33,7 +33,7 @@ struct LiveChatMessages
 #[derive(Serialize)]
 pub struct YTChatMessage {
     author: String,
-    message: String
+    text: String
 }
 
 pub fn start(
@@ -61,7 +61,7 @@ pub fn start(
         for item in &messages.items {
             let ytmsg = YTChatMessage {
                 author: item.authorDetails.displayName.clone(),
-                message: item.snippet.displayMessage.clone()
+                text: item.snippet.displayMessage.clone()
             };
             ytmsgs.push(ytmsg);
         }
