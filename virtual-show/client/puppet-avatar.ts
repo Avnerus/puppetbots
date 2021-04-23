@@ -28,10 +28,22 @@ const PuppetAvatar =  {
       .item-1 {
         height: 150px;
         position: relative;
-        right: 240px;
-        top: 50px;
+        right: 170px;
+        top: 65px;
+      }
+      .item-1-action {
+        height: 150px;
+        position: relative;
+        right: 270px;
+        top: 220px;
       }
       .item-2 {
+        height: 110px;
+        position: relative;
+        right: 185px;
+        bottom: 63px;
+      }
+      .item-2-action {
         height: 110px;
         position: relative;
         right: 185px;
@@ -40,7 +52,7 @@ const PuppetAvatar =  {
 		</style>
       <div id="avatar">
         <img src="assets/avatar-${getImage(identity, puppetState)}.png">
-        <div id="avatar-item" class="item-${identity}">
+        <div id="avatar-item" class="item-${getImage(identity, puppetState)}">
           <img src="assets/avatar-${getItemImage(identity, puppetState)}.png">
         </div>
       </div>

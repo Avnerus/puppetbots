@@ -1,4 +1,5 @@
 import {createStore} from 'redux';
+import { v4 as uuidv4 } from 'uuid';
 
 import SocketController from '../common/socket-controller'
 
@@ -15,7 +16,7 @@ const reducer = (state = {
     keyboard:  null,
     listener: null,
     audioStream: null,
-    chats: [],
+    chats: [ ],
     puppetState: {
     },
 }, action) => {
@@ -27,11 +28,9 @@ const reducer = (state = {
             });
         }
         action.socketController.on('puppet-state', (data) => {
-            console.log("New puppet state!", data.state);
             store.dispatch(setPuppetState(data.state));
         });
         action.socketController.on('youtube-chat', (data) => {
-            console.log("Youtube chat!!", data);
             store.dispatch(addChats(data.messages));
         });
         return {...state, socketController: action.socketController}
@@ -40,7 +39,6 @@ const reducer = (state = {
         return {...state, puppetState : action.value}
     }
     case 'SET_KEYBOARD' : {
-        console.log("Set keyboard", action.value);
         const keyboard = action.value; 
         for (const direction of [Direction.Left, Direction.Up, Direction.Right, Direction.Down]) {
           keyboard.onPress(direction, () => {
@@ -96,7 +94,23 @@ const reducer = (state = {
       return {...state}
     }
     case 'ADD_CHATS' : {
-      return {...state, chats: [...state.chats, ...action.value]}
+      const chats = action.value
+      for (const message of chats) {
+        message.uuid = uuidv4();
+      }
+      return {...state, chats: [...state.chats, ...chats]}
+    }
+    case 'REMOVE_CHAT_BY_UUID' : {
+      const index = state.chats.findIndex(e => e.uuid == action.value);
+      return {...state, 
+        chats: [
+          ...state.chats.slice(0, index),
+          ...state.chats.slice(index + 1)
+        ]
+      }
+    }
+    case 'CLEAR_CHATS' : {
+      return {...state,  chats: [] }
     }
     default:
       return state;
@@ -157,6 +171,15 @@ export const setAction = (value) => ({
 export const addChats = (value) => ({
     type: 'ADD_CHATS',
     value
+})
+
+export const removeChatByUuid = (value) => ({
+    type: 'REMOVE_CHAT_BY_UUID',
+    value
+})
+
+export const clearChats = () => ({
+    type: 'CLEAR_CHATS'
 })
 
 export const connect = (store, mapState) => ({

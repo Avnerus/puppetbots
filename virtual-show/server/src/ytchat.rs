@@ -55,23 +55,31 @@ pub fn start(
         ).unwrap()
         .text().unwrap();
 
-        let messages:LiveChatMessages = serde_json::from_str(&response).unwrap();
-        let mut ytmsgs = Vec::new();
+        match serde_json::from_str::<LiveChatMessages>(&response) {
+            Ok(messages) => {
+                let mut ytmsgs = Vec::new();
 
-        for item in &messages.items {
-            let ytmsg = YTChatMessage {
-                author: item.authorDetails.displayName.clone(),
-                text: item.snippet.displayMessage.clone()
-            };
-            ytmsgs.push(ytmsg);
+                for item in &messages.items {
+                    let ytmsg = YTChatMessage {
+                        author: item.authorDetails.displayName.clone(),
+                        text: item.snippet.displayMessage.clone()
+                    };
+                    ytmsgs.push(ytmsg);
+                }
+
+                if ytmsgs.len() > 0 {
+                    ytchat_tx.send(ytmsgs);
+                }
+
+                pageToken = messages.nextPageToken;
+
+                thread::sleep(Duration::from_millis(messages.pollingIntervalMillis));
+            },
+            Err(e) => {
+                println!("Error parsing response from YouTube: {:?}", e);
+                println!("{}",response);
+                thread::sleep(Duration::from_millis(5000));
+            }
         }
-
-        if ytmsgs.len() > 0 {
-            ytchat_tx.send(ytmsgs);
-        }
-
-        pageToken = messages.nextPageToken;
-
-        thread::sleep(Duration::from_millis(messages.pollingIntervalMillis));
     }
 }
