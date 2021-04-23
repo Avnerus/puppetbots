@@ -21,7 +21,6 @@ use soft_error::SoftError;
 use ytchat::YTChatMessage;
 
 use Config;
-use game;
 
 const  WAITING:u8 =  0;
 const  READY:u8 = 1;
