@@ -32,6 +32,7 @@ struct ServerConfig {
 
 #[derive(Deserialize, Debug)]
 struct YTChatConfig {
+    enabled: bool,
     chat_id: String,
     api_key: String
 }
