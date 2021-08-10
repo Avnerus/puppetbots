@@ -3,18 +3,9 @@ use ws::{listen, CloseCode, Message, Sender, Handler, Handshake};
 use ws::util::Token;
 use ws;
 
-use std::thread::{JoinHandle};
-use std::thread;
-use std::sync::mpsc;
-use std::sync::MutexGuard;
 use std::str;
-use std::rc::Rc;
-use std::io::{Error, ErrorKind};
 use std::collections::HashMap;
-use std::sync::mpsc::channel;
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
 
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use soft_error::SoftError;
@@ -53,7 +44,7 @@ fn send_pup_state(state: &ServerState, sender: &Sender) {
         "state": state.pup_state
     });
 
-    sender.broadcast((String::from("U") + &json_command.to_string()).as_bytes());
+    sender.broadcast((String::from("U") + &json_command.to_string()).as_bytes()).unwrap();
 }
 
 fn handle_message(
@@ -62,7 +53,7 @@ fn handle_message(
 ) -> Result<(), SoftError> {
     println!("Server got message '{}'. ", msg);
     let data = msg.into_data();
-    let mut state = &mut *server.state.lock().unwrap();
+    let state = &mut *server.state.lock().unwrap();
     let command = data[0] as char;
     println!("Command code: {}.", command);
 
@@ -73,7 +64,7 @@ fn handle_message(
         match role {
             0 ..= 2 => {
                 {
-                    if let Some(soft_target) = state.puppeteers.get(&role) {
+                    if let Some(_soft_target) = state.puppeteers.get(&role) {
                         return Err(SoftError::new("There is already a controller connected. Please try again later!"));
                     } else {
                          state.tokens.insert(server.ws.token(), role);
@@ -120,7 +111,7 @@ fn handle_message(
                             send_pup_state(state, &server.ws);
                         },
                         "ACT" => {
-                            let act:bool = (data[4] == 1);
+                            let act:bool = data[4] == 1;
                             println!("ACT State! {:?}", act);
                             (*state.pup_state.get_mut(&role).unwrap()).action = act;
                             send_pup_state(state, &server.ws);
@@ -157,7 +148,7 @@ impl Handler for Server {
                 println!("Error! {:?}", err);
                 let mut prefix = "E".to_string();
                 prefix.push_str(&err.message);
-                self.ws.send(prefix);
+                self.ws.send(prefix).unwrap();
             },
             Ok(()) => {}
         }
@@ -199,7 +190,7 @@ pub fn start(
             config: Arc::clone(&config),
             state: Arc::clone(&state)
         };
-        let mut state_mod = &mut state.lock().unwrap();
+        let state_mod = &mut state.lock().unwrap();
         state_mod.ws = Some(server.ws.clone());
         server
     }).unwrap();
