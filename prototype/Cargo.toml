@@ -1,0 +1,20 @@
+[package]
+name = "telepuppet_prototype"
+version = "0.1.0"
+authors = ["Avner Peled <avner.peled@aalto.fi>"]
+
+[[bin]]
+name = "prototype"
+path = "src/main.rs"
+
+[dependencies]
+ws = { version = "*"}
+argparse = {version = "*"}
+serde = {version = "*"}
+serde_derive = {version = "*"}
+serde_json = {version = "*"}
+nb = { version = "*"}
+ads1x1x = { version = "*"}
+embedded-hal = { version = "*"}
+linux-embedded-hal = { version = "*"}
+
