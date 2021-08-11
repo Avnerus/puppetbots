@@ -48,3 +48,5 @@ __pycache__
 logs/*
 virtual-show/server/target/*
 virtual-show/server/log.txt
+
+target

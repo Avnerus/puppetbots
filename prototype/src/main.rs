@@ -12,6 +12,7 @@ use std::sync::{Arc};
 
 mod ws_server;
 mod soft_error;
+mod actuator;
 
 #[derive(Deserialize, Debug)]
 struct ServerConfig {
@@ -37,9 +38,21 @@ fn main() {
 
     let config = Arc::new(read_config().unwrap());
 
-    println!("Starting server");
+    // Actuator thread
+    let (actuator_tx, actuator_rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = channel();
+
+    println!("Starting actuator");
+
+    let actuator_thread = thread::Builder::new().name("actuator".to_owned()).spawn(move || {
+        actuator::start(
+            ytchat_rx
+        );
+    }).unwrap();
+
+
 
     // Server thread
+    println!("Starting server");
     let config_ws = Arc::clone(&config);
     let server = thread::Builder::new().name("server".to_owned()).spawn(move || {
         ws_server::start(
