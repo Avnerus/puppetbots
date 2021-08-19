@@ -5,6 +5,7 @@ use ws;
 
 use std::str;
 use std::collections::HashMap;
+use std::sync::mpsc;
 
 use serde_json::json;
 
@@ -171,7 +172,8 @@ impl Handler for Server {
 }
 
 pub fn start(
-    config: Arc<Config>
+    config: Arc<Config>,
+    server_tx: mpsc::Sender<Vec<u8>>
 
 ) {
     println!("\nSpawning server on port {}", config.server.port);

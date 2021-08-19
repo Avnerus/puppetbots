@@ -17,4 +17,5 @@ nb = { version = "*"}
 ads1x1x = { version = "*"}
 embedded-hal = { version = "*"}
 linux-embedded-hal = { version = "*"}
+adafruit_motorkit = { version = "*"}
 

@@ -5,10 +5,18 @@ extern crate ws;
 #[macro_use]
 extern crate serde_derive;
 
+extern crate ads1x1x;
+extern crate embedded_hal;
+extern crate linux_embedded_hal;
+extern crate nb;
+extern crate adafruit_motorkit;
+
+
 use std::thread;
 use std::fs::File;
 use std::path::Path;
 use std::sync::{Arc};
+use std::sync::mpsc;
 
 mod ws_server;
 mod soft_error;
@@ -39,24 +47,26 @@ fn main() {
     let config = Arc::new(read_config().unwrap());
 
     // Actuator thread
-    let (actuator_tx, actuator_rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = channel();
+    let (actuator_tx, actuator_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
 
     println!("Starting actuator");
 
     let actuator_thread = thread::Builder::new().name("actuator".to_owned()).spawn(move || {
         actuator::start(
-            ytchat_rx
+            actuator_rx
         );
     }).unwrap();
 
 
-
     // Server thread
+    let (server_tx, server_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
+
     println!("Starting server");
     let config_ws = Arc::clone(&config);
     let server = thread::Builder::new().name("server".to_owned()).spawn(move || {
         ws_server::start(
-            config_ws
+            config_ws,
+            server_tx
         );
     }).unwrap();
     
