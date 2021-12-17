@@ -20,7 +20,7 @@ use std::sync::mpsc;
 
 mod ws_server;
 mod soft_error;
-mod actuator;
+mod puppet;
 
 #[derive(Deserialize, Debug)]
 struct ServerConfig {
@@ -46,14 +46,14 @@ fn main() {
 
     let config = Arc::new(read_config().unwrap());
 
-    // Actuator thread
-    let (actuator_tx, actuator_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
+    // Puppet thread
+    let (puppet_tx, puppet_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
 
-    println!("Starting actuator");
+    println!("Starting puppet");
 
-    let actuator_thread = thread::Builder::new().name("actuator".to_owned()).spawn(move || {
-        actuator::start(
-            actuator_rx
+    let puppet_thread = thread::Builder::new().name("puppet".to_owned()).spawn(move || {
+        puppet::start(
+            puppet_tx
         );
     }).unwrap();
 
@@ -66,7 +66,8 @@ fn main() {
     let server = thread::Builder::new().name("server".to_owned()).spawn(move || {
         ws_server::start(
             config_ws,
-            server_tx
+            server_tx,
+            puppet_rx
         );
     }).unwrap();
     

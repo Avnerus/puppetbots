@@ -1,4 +1,5 @@
 use std::sync::{Arc,Mutex};
+use std::{thread,time};
 use ws::{listen, CloseCode, Message, Sender, Handler, Handshake};
 use ws::util::Token;
 use ws;
@@ -12,6 +13,8 @@ use serde_json::json;
 use soft_error::SoftError;
 
 use Config;
+
+const ADMIN_ROLE : u8 = 0;
 
 #[derive(Serialize, Deserialize)]
 struct Puppet {
@@ -73,19 +76,21 @@ fn handle_message(
                              role,
                              server.ws.clone()
                          );
-                         state.pup_state.insert (
-                             role,
-                             Puppet {
-                                connected: true,
-                                position: match role {
-                                    1 => vec![105,103],
-                                    2 => vec![180,103],
-                                    _ => vec![0,0]
-                                },
-                                name: str::from_utf8(&data[2..]).unwrap().to_string(),
-                                action: false
-                             }
-                         );
+                         if role != ADMIN_ROLE {
+                            state.pup_state.insert (
+                                role,
+                                Puppet {
+                                   connected: true,
+                                   position: match role {
+                                       1 => vec![105,103],
+                                       2 => vec![180,103],
+                                       _ => vec![0,0]
+                                   },
+                                   name: str::from_utf8(&data[2..]).unwrap().to_string(),
+                                   action: false
+                                }
+                            );
+                         }
                          println!("Registration successful");
                     }
                 }
@@ -173,7 +178,8 @@ impl Handler for Server {
 
 pub fn start(
     config: Arc<Config>,
-    server_tx: mpsc::Sender<Vec<u8>>
+    server_tx: mpsc::Sender<Vec<u8>>,
+    puppet_rx: mpsc::Receiver<Vec<u8>>
 
 ) {
     println!("\nSpawning server on port {}", config.server.port);
@@ -184,6 +190,41 @@ pub fn start(
         pup_state : HashMap::new(),
         ws: None
     }));
+
+    let sensing_state = state.clone();
+
+    let sensing_thread = thread::spawn(move || {
+        while let Ok(mut msg) = puppet_rx.recv() {
+            let command = msg[0] as char;
+            match(command) {
+                'S' => {
+                    let state = & sensing_state.lock().unwrap();
+                    match msg[1] as char {
+                        'P' => {
+                            println!("Pressure sensing message!");
+                            if let Some(sa) = state.puppeteers.get(&ADMIN_ROLE) {
+                               sa.send(msg).unwrap();
+                            }
+                        }
+                        _ => {
+                            println!("Unknown sensing message! {}", msg[1]);
+                        }
+                    }
+                }
+                'D' => {
+                    let state = & sensing_state.lock().unwrap();
+                    println!("Debug message!");
+                    if let Some(sa) = state.puppeteers.get(&ADMIN_ROLE) {
+                       sa.send(msg).unwrap();
+                    }
+                }
+                _ => {
+                    println!("Unknown sensing command! {}",command);
+                }
+            }
+        }
+    });
+
 
     listen(("0.0.0.0",config.server.port), move |out| {
         println!("Connection");
