@@ -25,8 +25,6 @@ pub fn start(
         }
     );
 
-       // t mut dc_motor = DcMotor::try_new(&mut pwm, Motor::Motor1).unwrap();
-
     test1.update();
     actuators.insert(test1.name.to_string(), test1);
 
