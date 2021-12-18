@@ -1,5 +1,5 @@
 use std::sync::{Arc,Mutex};
-use std::{thread,time};
+use std::{thread};
 use ws::{listen, CloseCode, Message, Sender, Handler, Handshake};
 use ws::util::Token;
 use ws;
@@ -35,9 +35,8 @@ struct ServerState {
 // WebSocket connection handler for the server connection
 struct Server {
    ws: Sender,
-  //  serial: ThreadOut<String>,
-   config: Arc<Config>,
-   state: Arc<Mutex<ServerState>>
+   state: Arc<Mutex<ServerState>>,
+   server_tx: mpsc::Sender<Vec<u8>>
 }
 
 
@@ -125,6 +124,10 @@ fn handle_message(
                         _ => return Err(SoftError::new("Unknown command"))
                     }
                 }
+                'M' => {
+                    // Motor command
+                    server.server_tx.send(data).unwrap();
+                }
                 _ => return Err(SoftError::new("Unknown command"))
             }
         } else {
@@ -193,10 +196,10 @@ pub fn start(
 
     let sensing_state = state.clone();
 
-    let sensing_thread = thread::spawn(move || {
-        while let Ok(mut msg) = puppet_rx.recv() {
+    thread::spawn(move || {
+        while let Ok(msg) = puppet_rx.recv() {
             let command = msg[0] as char;
-            match(command) {
+            match command {
                 'S' => {
                     let state = & sensing_state.lock().unwrap();
                     match msg[1] as char {
@@ -230,8 +233,8 @@ pub fn start(
         println!("Connection");
         let server = Server {
             ws: out,
-            config: Arc::clone(&config),
-            state: Arc::clone(&state)
+            state: Arc::clone(&state),
+            server_tx: server_tx.clone()
         };
         let state_mod = &mut state.lock().unwrap();
         state_mod.ws = Some(server.ws.clone());

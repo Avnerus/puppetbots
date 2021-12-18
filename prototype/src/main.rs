@@ -10,6 +10,7 @@ extern crate embedded_hal;
 extern crate linux_embedded_hal;
 extern crate nb;
 extern crate adafruit_motorkit;
+extern crate pwm_pca9685;
 
 
 use std::thread;
@@ -48,18 +49,19 @@ fn main() {
 
     // Puppet thread
     let (puppet_tx, puppet_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
+    let (server_tx, server_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
 
     println!("Starting puppet");
 
-    let puppet_thread = thread::Builder::new().name("puppet".to_owned()).spawn(move || {
+    thread::Builder::new().name("puppet".to_owned()).spawn(move || {
         puppet::start(
-            puppet_tx
+            puppet_tx,
+            server_rx
         );
     }).unwrap();
 
 
     // Server thread
-    let (server_tx, server_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
 
     println!("Starting server");
     let config_ws = Arc::clone(&config);

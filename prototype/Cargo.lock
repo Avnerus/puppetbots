@@ -600,6 +600,7 @@ dependencies = [
  "embedded-hal",
  "linux-embedded-hal",
  "nb 1.0.0",
+ "pwm-pca9685",
  "serde",
  "serde_derive",
  "serde_json",
