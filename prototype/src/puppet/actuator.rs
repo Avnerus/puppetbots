@@ -106,10 +106,10 @@ impl Actuator {
         self.pressure = block!(self.adc.read(&mut channel::DifferentialA0A1)).unwrap();
         if self.pressure > MAX_PRESSURE && self.state != State::EXPANDING {
             println!("Pressure surpassed MAX: {}", self.pressure);
-          //  self.expand(1.0);
+            self.expand(1.0);
         } else if self.pressure >= TARGET_PRESSURE && self.state == State::CONTRACTING {
             println!("Reached target pressure: {}", self.pressure);
-            self.contract(0.0);
+            self.stop();
         }
     }
 }
