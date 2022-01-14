@@ -34,20 +34,34 @@ pub fn start(
         if let Ok(msg) = server_rx.try_recv() {
             let command = msg[0] as char;
             match command {
-                'M' => {
+                'A' => {
                     let null_pos = msg.iter().position(|&x| x == 0).unwrap();
                     let motor = str::from_utf8(&msg[1..null_pos]).unwrap();
-                    let value = msg[null_pos + 1];
-                    println!("Puppet motor command {}: {}", motor, value);
+                    let motor_command = msg[null_pos + 1] as char;
+                    let value = msg[null_pos + 2];
+                    println!("Puppet motor command {}: {}, {}", motor, motor_command, value);
 
                     if let Some(actuator) = actuators.get_mut(&motor.to_string()) {
-                        actuator.contract(value as f32 / 255.0);
+                        match motor_command {
+                            'C' => {
+                                actuator.contract(value as f32 / 255.0);
+                            }
+                            'E' => {
+                                actuator.expand(value as f32 / 255.0);
+                            }
+                            'S' => {
+                                actuator.stop();
+                            }
+                            _ => {
+                                println!("Unknown actuator motor command! {}", motor_command);
+                            }
+                        }
                     } else {
                         println!("Unknown actuator {}", motor);
                     }
                 }
                 _ => {
-                    println!("Unknown Motor command! {}",command);
+                    println!("Unknown puppet command! {}",command);
                 }
             }
         }

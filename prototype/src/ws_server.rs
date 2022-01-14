@@ -124,8 +124,8 @@ fn handle_message(
                         _ => return Err(SoftError::new("Unknown command"))
                     }
                 }
-                'M' => {
-                    // Motor command
+                'A' => {
+                    // Actuator command
                     server.server_tx.send(data).unwrap();
                 }
                 _ => return Err(SoftError::new("Unknown command"))

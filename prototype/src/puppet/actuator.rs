@@ -39,7 +39,8 @@ pub struct Actuator {
     expand_pwm: Pca9685<I2cdev>
 }
 
-const MAX_PRESSURE: i16 = 300;
+const MAX_PRESSURE: i16 = 1000;
+const TARGET_PRESSURE: i16 = 500;
 
 impl Actuator {
     pub fn new(props: ActuatorProps) -> Actuator {
@@ -89,17 +90,26 @@ impl Actuator {
         self.contract_valve.set_throttle(&mut self.contract_pwm, 0.0).unwrap();
       //  self.contract_valve.stop(&mut self.contract_pwm).unwrap();
     
-        println!("Stopping");
         if speed == 0.0 {
+            println!("Stopping");
           //  self.expand_valve.stop(&mut self.expand_pwm).unwrap();
             self.state = State::IDLE;
         }
+    }
+    pub fn stop(&mut self) {
+        println!("Stopping");
+        self.state = State::IDLE;
+        self.expand_valve.set_throttle(&mut self.expand_pwm, 0.0).unwrap();
+        self.contract_valve.set_throttle(&mut self.contract_pwm, 0.0).unwrap();
     }
     pub fn update(&mut self) {
         self.pressure = block!(self.adc.read(&mut channel::DifferentialA0A1)).unwrap();
         if self.pressure > MAX_PRESSURE && self.state != State::EXPANDING {
             println!("Pressure surpassed MAX: {}", self.pressure);
-            self.expand(1.0);
+          //  self.expand(1.0);
+        } else if self.pressure >= TARGET_PRESSURE && self.state == State::CONTRACTING {
+            println!("Reached target pressure: {}", self.pressure);
+            self.contract(0.0);
         }
     }
 }
