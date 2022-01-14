@@ -42,6 +42,7 @@ jspm_packages
 *.swn
 
 bundle.js
+bundle.js.map
 .DS_Store
 
 __pycache__
