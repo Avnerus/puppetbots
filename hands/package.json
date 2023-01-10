@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "esbuild src/index.ts --bundle --minify --sourcemap --outfile=dist/bundle.js",
     "watch": "esbuild src/index.ts --watch --bundle --minify --sourcemap --outfile=dist/bundle.js",
-    "dev": "concurrently \"npm run watch\"  \"npx http-server\""
+    "dev": "concurrently \"npm run watch\"  \"npx http-server ./dist\""
   },
   "author": "",
   "license": "ISC",
