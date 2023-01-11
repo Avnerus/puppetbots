@@ -16,17 +16,22 @@ pub fn start(
 
     let mut actuators: HashMap<String, Actuator> = HashMap::new();
 
-    let mut test1 = Actuator::new(
+    let actuator = match Actuator::new(
         ActuatorProps {
             name: "Test",
             pressure_i2c_dev: "/dev/i2c-1",
             contract_motor: Motor::Motor1,
             expand_motor: Motor::Motor2
         }
-    );
-
-    test1.update();
-    actuators.insert(test1.name.to_string(), test1);
+    ) {
+        Ok(mut test1) => {
+            test1.update();
+            actuators.insert(test1.name.to_string(), test1);
+        }
+        Err(e) => {
+            println!("Error initializing actuator: {:?}", e);
+        }
+    };
 
     let mut last_admin_update = Instant::now();
     

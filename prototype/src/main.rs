@@ -12,7 +12,6 @@ extern crate nb;
 extern crate adafruit_motorkit;
 extern crate pwm_pca9685;
 
-
 use std::thread;
 use std::fs::File;
 use std::path::Path;

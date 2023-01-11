@@ -19,4 +19,3 @@ embedded-hal = { version = "*"}
 linux-embedded-hal = { version = "*"}
 adafruit_motorkit = { version = "*"}
 pwm-pca9685 = { version = "*"}
-
