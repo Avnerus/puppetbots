@@ -36,7 +36,8 @@ struct ServerState {
 struct Server {
    ws: Sender,
    state: Arc<Mutex<ServerState>>,
-   server_tx: mpsc::Sender<Vec<u8>>
+   server_tx: mpsc::Sender<Vec<u8>>,
+   config: Arc<Config>
 }
 
 
@@ -127,6 +128,17 @@ fn handle_message(
                 'A' => {
                     // Actuator command
                     server.server_tx.send(data).unwrap();
+                }
+                'C' => {
+                    // config command
+                    let action = str::from_utf8(&data[1..4]).unwrap();
+                    println!("config command {:?}", action);
+                    match action {
+                        "GET" => {
+                            server.ws.send((String::from("F") + &json!(&server.config).to_string()).as_bytes()).unwrap();
+                        }                        
+                        _ => return Err(SoftError::new("Unknown CONFIG command"))
+                    }
                 }
                 _ => return Err(SoftError::new("Unknown command"))
             }
@@ -234,7 +246,8 @@ pub fn start(
         let server = Server {
             ws: out,
             state: Arc::clone(&state),
-            server_tx: server_tx.clone()
+            server_tx: server_tx.clone(),
+            config: Arc::clone(&config)
         };
         let state_mod = &mut state.lock().unwrap();
         state_mod.ws = Some(server.ws.clone());

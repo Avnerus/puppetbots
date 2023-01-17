@@ -22,12 +22,12 @@ mod ws_server;
 mod soft_error;
 mod puppet;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize)]
 struct ServerConfig {
     port: u16
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize)]
 pub struct Config {
     server: ServerConfig,
     version: String
@@ -63,10 +63,9 @@ fn main() {
     // Server thread
 
     println!("Starting server");
-    let config_ws = Arc::clone(&config);
     let server = thread::Builder::new().name("server".to_owned()).spawn(move || {
         ws_server::start(
-            config_ws,
+        config,
             server_tx,
             puppet_rx
         );

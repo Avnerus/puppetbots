@@ -10,7 +10,7 @@ path = "src/main.rs"
 [dependencies]
 ws = { version = "*"}
 argparse = {version = "*"}
-serde = {version = "*"}
+serde = {version = "*", features = ["rc"]}
 serde_derive = {version = "*"}
 serde_json = {version = "*"}
 nb = { version = "*"}
