@@ -2,5 +2,13 @@
     "version": "1.0",
     "server": {
         "port": 3012
-    }
+    },
+    "actuators": [
+      {
+        "name": "Test",
+        "pressureDevice": "/dev/i2c-1",
+        "contractMotor": 1,
+        "expandMotor": 2
+      }
+    ]
 }

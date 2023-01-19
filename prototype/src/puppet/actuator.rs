@@ -23,14 +23,14 @@ pub enum State {
 }
 
 pub struct ActuatorProps {
-    pub name: &'static str,
-    pub pressure_i2c_dev: &'static str,
+    pub name: String,
+    pub pressure_i2c_dev: String,
     pub contract_motor: Motor,
     pub expand_motor: Motor
 }
 
 pub struct Actuator {
-    pub name: &'static str,
+    pub name: String,
     pub pressure: i16,
     pub state: State,
     adc: Adc,

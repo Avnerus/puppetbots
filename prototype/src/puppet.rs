@@ -1,6 +1,7 @@
 use std::{thread};
 use std::time::{Duration, Instant};
 use std::sync::mpsc;
+use std::sync::{Arc};
 use std::collections::HashMap;
 use std::str;
 
@@ -8,30 +9,46 @@ use adafruit_motorkit::{Motor};
 
 mod actuator;
 use self::actuator::{Actuator, ActuatorProps};
+use Config;
+
+fn intToMotorEnum(index: u16) -> Option<Motor> {
+    match index {
+        1 => Some(Motor::Motor1),
+        2 => Some(Motor::Motor2),
+        3 => Some(Motor::Motor3),
+        4 => Some(Motor::Motor4),
+        _ => None
+    }
+}
 
 pub fn start(
+    config: Arc<Config>,
     puppet_tx: mpsc::Sender<Vec<u8>>,
     server_rx: mpsc::Receiver<Vec<u8>>
 ) {
 
     let mut actuators: HashMap<String, Actuator> = HashMap::new();
+    for actuator in &config.actuators {
+        println!("Creating actutor {:?}", actuator.name);
 
-    let actuator = match Actuator::new(
-        ActuatorProps {
-            name: "Test",
-            pressure_i2c_dev: "/dev/i2c-1",
-            contract_motor: Motor::Motor1,
-            expand_motor: Motor::Motor2
-        }
-    ) {
-        Ok(mut test1) => {
-            test1.update();
-            actuators.insert(test1.name.to_string(), test1);
-        }
-        Err(e) => {
-            println!("Error initializing actuator: {:?}", e);
-        }
-    };
+        let actuator = match Actuator::new(
+            ActuatorProps {
+                name: actuator.name.clone(),
+                pressure_i2c_dev: actuator.pressureDevice.clone(),
+                contract_motor: intToMotorEnum(actuator.contractMotor).unwrap(),
+                expand_motor: intToMotorEnum(actuator.expandMotor).unwrap()
+            }
+        ) {
+            Ok(mut result) => {
+                result.update();
+                actuators.insert(result.name.to_string(), result);
+            }
+            Err(e) => {
+                println!("Error initializing actuator: {:?} - {:?}", actuator.name, e);
+            }
+        };
+
+    }
 
     let mut last_admin_update = Instant::now();
     

@@ -28,9 +28,19 @@ struct ServerConfig {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct ActuatorConfig {
+    name: String,
+    pressureDevice: String,
+    contractMotor: u16,
+    expandMotor: u16
+}
+
+
+#[derive(Deserialize, Serialize)]
 pub struct Config {
     server: ServerConfig,
-    version: String
+    version: String,
+    actuators: Vec<ActuatorConfig>
 }
 
 fn read_config() -> Result<Config, Box<dyn std::error::Error>> {
@@ -52,24 +62,30 @@ fn main() {
 
     println!("Starting puppet");
 
-    thread::Builder::new().name("puppet".to_owned()).spawn(move || {
-        puppet::start(
-            puppet_tx,
-            server_rx
-        );
-    }).unwrap();
+    {
+        let config = Arc::clone(&config);
+        thread::Builder::new().name("puppet".to_owned()).spawn(move || {
+            puppet::start(
+                Arc::clone(&config),
+                puppet_tx,
+                server_rx
+            );
+        }).unwrap();
+    }
 
 
     // Server thread
-
     println!("Starting server");
-    let server = thread::Builder::new().name("server".to_owned()).spawn(move || {
-        ws_server::start(
-        config,
-            server_tx,
-            puppet_rx
-        );
-    }).unwrap();
-    
-    let _ = server.join();
+    {
+        let config = Arc::clone(&config);
+        let server = thread::Builder::new().name("server".to_owned()).spawn(move || {
+            ws_server::start(
+                config,
+                server_tx,
+                puppet_rx
+            );
+        }).unwrap();
+
+        let _ = server.join();
+    }
 }
