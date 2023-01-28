@@ -8,7 +8,8 @@ use std::str;
 use adafruit_motorkit::{Motor};
 
 mod actuator;
-use self::actuator::{Actuator, ActuatorProps};
+use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
+use self::actuator::rpi_interface::{RPIInterface, RPIInterfaceProps};
 use Config;
 
 fn intToMotorEnum(index: u16) -> Option<Motor> {
@@ -31,20 +32,25 @@ pub fn start(
     for actuator in &config.actuators {
         println!("Creating actutor {:?}", actuator.name);
 
-        let actuator = match Actuator::new(
-            ActuatorProps {
-                name: actuator.name.clone(),
+        let interface = match RPIInterface::new(
+            RPIInterfaceProps {
                 pressure_i2c_dev: actuator.pressureDevice.clone(),
                 contract_motor: intToMotorEnum(actuator.contractMotor).unwrap(),
                 expand_motor: intToMotorEnum(actuator.expandMotor).unwrap()
-            }
-        ) {
+            })
+         {
             Ok(mut result) => {
-                result.update();
-                actuators.insert(result.name.to_string(), result);
+                let mut actuator = Actuator::new(
+                    ActuatorProps {
+                        name: actuator.name.clone(),
+                        interface: Box::new(result)
+                    }
+                );
+                actuator.update();
+                actuators.insert(actuator.name.to_string(), actuator);
             }
             Err(e) => {
-                println!("Error initializing actuator: {:?} - {:?}", actuator.name, e);
+                println!("Error initializing actuator interface: {:?} - {:?}", actuator.name, e);
             }
         };
 
@@ -66,10 +72,10 @@ pub fn start(
                     if let Some(actuator) = actuators.get_mut(&motor.to_string()) {
                         match motor_command {
                             'C' => {
-                                actuator.contract(value as f32 / 255.0);
+                                actuator.contract_at(value as f32 / 255.0);
                             }
                             'E' => {
-                                actuator.expand(value as f32 / 255.0);
+                                actuator.expand_at(value as f32 / 255.0);
                             }
                             'S' => {
                                 actuator.stop();
