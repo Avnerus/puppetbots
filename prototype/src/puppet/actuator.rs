@@ -1,10 +1,3 @@
-use embedded_hal::adc::OneShot;
-use linux_embedded_hal::I2cdev;
-use nb::block;
-use adafruit_motorkit::{dc::DcMotor, init_pwm, Motor};
-use pwm_pca9685::Pca9685;
-use std::error::Error;
-
 pub mod rpi_interface;
 
 #[derive(PartialEq)]

@@ -12,7 +12,7 @@ use nb::block;
 use adafruit_motorkit::{dc::DcMotor, init_pwm, Motor};
 use pwm_pca9685::Pca9685;
 use std::error::Error;
-use puppet::actuator::{Actuator, ActuatorInterface, State, MAX_PRESSURE, TARGET_PRESSURE};
+use puppet::actuator::{ActuatorInterface};
 
 type Adc = Ads1x1x<I2cInterface<I2cdev>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>;
 
@@ -46,7 +46,7 @@ impl RPIInterface {
         );
 
         match adc.set_full_scale_range(FullScaleRange::Within4_096V) {
-            Ok(r) => Ok(
+            Ok(()) => Ok(
                 RPIInterface {
                     adc,
                     contract_pwm,
@@ -55,7 +55,7 @@ impl RPIInterface {
                     expand_valve
                 }
             ),
-            Err(e) => Err("I2CError setting ADC range")?
+            Err(e) => Err(format!("I2CError setting ADC range {:?}",e))?
         }
     } 
 }

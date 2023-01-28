@@ -12,7 +12,7 @@ use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
 use self::actuator::rpi_interface::{RPIInterface, RPIInterfaceProps};
 use Config;
 
-fn intToMotorEnum(index: u16) -> Option<Motor> {
+fn int_to_motor_enum(index: u16) -> Option<Motor> {
     match index {
         1 => Some(Motor::Motor1),
         2 => Some(Motor::Motor2),
@@ -32,14 +32,14 @@ pub fn start(
     for actuator in &config.actuators {
         println!("Creating actutor {:?}", actuator.name);
 
-        let interface = match RPIInterface::new(
+        match RPIInterface::new(
             RPIInterfaceProps {
-                pressure_i2c_dev: actuator.pressureDevice.clone(),
-                contract_motor: intToMotorEnum(actuator.contractMotor).unwrap(),
-                expand_motor: intToMotorEnum(actuator.expandMotor).unwrap()
+                pressure_i2c_dev: actuator.pressure_device.clone(),
+                contract_motor: int_to_motor_enum(actuator.contract_motor).unwrap(),
+                expand_motor: int_to_motor_enum(actuator.expand_motor).unwrap()
             })
          {
-            Ok(mut result) => {
+            Ok(result) => {
                 let mut actuator = Actuator::new(
                     ActuatorProps {
                         name: actuator.name.clone(),

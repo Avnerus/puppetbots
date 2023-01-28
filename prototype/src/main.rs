@@ -28,11 +28,12 @@ struct ServerConfig {
 }
 
 #[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ActuatorConfig {
     name: String,
-    pressureDevice: String,
-    contractMotor: u16,
-    expandMotor: u16
+    pressure_device: String,
+    contract_motor: u16,
+    expand_motor: u16
 }
 
 
