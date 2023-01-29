@@ -30,7 +30,7 @@ pub struct RPIInterface {
     expand_pwm: Pca9685<I2cdev>
 }
 impl RPIInterface {
-    pub fn new(props: RPIInterfaceProps) -> Result<RPIInterface,Box<dyn Error>> {
+    pub fn new(props: RPIInterfaceProps) -> Result<Box<dyn ActuatorInterface>,Box<dyn Error>> {
         let mut contract_pwm =  init_pwm(None)?;
         let mut expand_pwm =  init_pwm(None)?;
         
@@ -47,13 +47,13 @@ impl RPIInterface {
 
         match adc.set_full_scale_range(FullScaleRange::Within4_096V) {
             Ok(()) => Ok(
-                RPIInterface {
+                Box::new(RPIInterface {
                     adc,
                     contract_pwm,
                     expand_pwm,
                     contract_valve,
                     expand_valve
-                }
+                })
             ),
             Err(e) => Err(format!("I2CError setting ADC range {:?}",e))?
         }

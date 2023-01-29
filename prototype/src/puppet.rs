@@ -4,12 +4,17 @@ use std::sync::mpsc;
 use std::sync::{Arc};
 use std::collections::HashMap;
 use std::str;
+use std::error::Error;
 
 use adafruit_motorkit::{Motor};
 
 mod actuator;
 use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
 use self::actuator::rpi_interface::{RPIInterface, RPIInterfaceProps};
+use self::actuator::dummy_interface::{DummyInterface, DummyInterfaceProps};
+
+use soft_error::{SoftError};
+
 use Config;
 
 fn int_to_motor_enum(index: u16) -> Option<Motor> {
@@ -32,18 +37,32 @@ pub fn start(
     for actuator in &config.actuators {
         println!("Creating actutor {:?}", actuator.name);
 
-        match RPIInterface::new(
-            RPIInterfaceProps {
-                pressure_i2c_dev: actuator.pressure_device.clone(),
-                contract_motor: int_to_motor_enum(actuator.contract_motor).unwrap(),
-                expand_motor: int_to_motor_enum(actuator.expand_motor).unwrap()
-            })
-         {
+        let interface: Result<Box<dyn ActuatorInterface>, Box<dyn Error>> = match actuator.interface_type.as_str() {
+            "rpi" => {
+                RPIInterface::new(
+                        RPIInterfaceProps {
+                        pressure_i2c_dev: actuator.pressure_device.clone(),
+                        contract_motor: int_to_motor_enum(actuator.contract_motor).unwrap(),
+                        expand_motor: int_to_motor_enum(actuator.expand_motor).unwrap()
+                    }
+                )
+            },
+            "dummy" => {
+                DummyInterface::new(
+                    DummyInterfaceProps { 
+                        speed_factor: actuator.speed_factor
+                    }
+                )
+            },
+            _ => Err(SoftError::new(format!("Invalid actuator interface type: {:?}",actuator.interface_type).as_str()).into())
+        };
+
+        match interface {
             Ok(result) => {
                 let mut actuator = Actuator::new(
                     ActuatorProps {
                         name: actuator.name.clone(),
-                        interface: Box::new(result)
+                        interface: result
                     }
                 );
                 actuator.update();

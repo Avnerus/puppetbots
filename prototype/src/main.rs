@@ -32,8 +32,10 @@ struct ServerConfig {
 pub struct ActuatorConfig {
     name: String,
     pressure_device: String,
+    interface_type: String,
     contract_motor: u16,
-    expand_motor: u16
+    expand_motor: u16,
+    speed_factor: f32
 }
 
 

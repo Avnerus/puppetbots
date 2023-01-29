@@ -1,4 +1,5 @@
 pub mod rpi_interface;
+pub mod dummy_interface;
 
 #[derive(PartialEq)]
 pub enum State {
@@ -41,6 +42,7 @@ impl Actuator {
     } 
 }
 impl ActuatorInterface for Actuator {
+
     fn contract_at(&mut self, speed: f32) {
         println!("Contracting at {}", speed);
         self.state = State::CONTRACTING;

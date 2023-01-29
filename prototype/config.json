@@ -5,7 +5,9 @@
     },
     "actuators": [
       {
-        "name": "Test",
+        "name": "Test Dummy",
+        "interfaceType": "dummy",
+        "speedFactor": 1.0,
         "pressureDevice": "/dev/i2c-1",
         "contractMotor": 1,
         "expandMotor": 2
