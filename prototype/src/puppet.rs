@@ -1,32 +1,79 @@
 use std::{thread};
 use std::time::{Duration, Instant};
 use std::sync::mpsc;
+use std::sync::{Arc};
 use std::collections::HashMap;
 use std::str;
+use std::error::Error;
 
 use adafruit_motorkit::{Motor};
 
 mod actuator;
-use self::actuator::{Actuator, ActuatorProps};
+use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
+use self::actuator::rpi_interface::{RPIInterface, RPIInterfaceProps};
+use self::actuator::dummy_interface::{DummyInterface, DummyInterfaceProps};
+
+use soft_error::{SoftError};
+
+use Config;
+
+fn int_to_motor_enum(index: u16) -> Option<Motor> {
+    match index {
+        1 => Some(Motor::Motor1),
+        2 => Some(Motor::Motor2),
+        3 => Some(Motor::Motor3),
+        4 => Some(Motor::Motor4),
+        _ => None
+    }
+}
 
 pub fn start(
+    config: Arc<Config>,
     puppet_tx: mpsc::Sender<Vec<u8>>,
     server_rx: mpsc::Receiver<Vec<u8>>
 ) {
 
     let mut actuators: HashMap<String, Actuator> = HashMap::new();
+    for actuator in &config.actuators {
+        println!("Creating actutor {:?}", actuator.name);
 
-    let mut test1 = Actuator::new(
-        ActuatorProps {
-            name: "Test",
-            pressure_i2c_dev: "/dev/i2c-1",
-            contract_motor: Motor::Motor1,
-            expand_motor: Motor::Motor2
-        }
-    );
+        let interface: Result<Box<dyn ActuatorInterface>, Box<dyn Error>> = match actuator.interface_type.as_str() {
+            "rpi" => {
+                RPIInterface::new(
+                        RPIInterfaceProps {
+                        pressure_i2c_dev: actuator.pressure_device.clone(),
+                        contract_motor: int_to_motor_enum(actuator.contract_motor).unwrap(),
+                        expand_motor: int_to_motor_enum(actuator.expand_motor).unwrap()
+                    }
+                )
+            },
+            "dummy" => {
+                DummyInterface::new(
+                    DummyInterfaceProps { 
+                        speed_factor: actuator.speed_factor
+                    }
+                )
+            },
+            _ => Err(SoftError::new(format!("Invalid actuator interface type: {:?}",actuator.interface_type).as_str()).into())
+        };
 
-    test1.update();
-    actuators.insert(test1.name.to_string(), test1);
+        match interface {
+            Ok(result) => {
+                let mut actuator = Actuator::new(
+                    ActuatorProps {
+                        name: actuator.name.clone(),
+                        interface: result
+                    }
+                );
+                actuator.update();
+                actuators.insert(actuator.name.to_string(), actuator);
+            }
+            Err(e) => {
+                println!("Error initializing actuator interface: {:?} - {:?}", actuator.name, e);
+            }
+        };
+
+    }
 
     let mut last_admin_update = Instant::now();
     
@@ -44,10 +91,10 @@ pub fn start(
                     if let Some(actuator) = actuators.get_mut(&motor.to_string()) {
                         match motor_command {
                             'C' => {
-                                actuator.contract(value as f32 / 255.0);
+                                actuator.contract_at(value as f32 / 255.0);
                             }
                             'E' => {
-                                actuator.expand(value as f32 / 255.0);
+                                actuator.expand_at(value as f32 / 255.0);
                             }
                             'S' => {
                                 actuator.stop();
