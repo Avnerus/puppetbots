@@ -216,7 +216,7 @@ pub fn start(
                     let state = & sensing_state.lock().unwrap();
                     match msg[1] as char {
                         'P' => {
-                            println!("Pressure sensing message!");
+                        //    println!("Pressure sensing message!");
                             if let Some(sa) = state.puppeteers.get(&ADMIN_ROLE) {
                                sa.send(msg).unwrap();
                             }
