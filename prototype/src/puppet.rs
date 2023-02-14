@@ -72,16 +72,17 @@ pub fn start(
                 'A' => {
                     let null_pos = msg.iter().position(|&x| x == 0).unwrap();
                     let motor = str::from_utf8(&msg[1..null_pos]).unwrap();
-                    let motor_command = msg[null_pos + 1] as char;
-                    let value = msg[null_pos + 2];
-                    println!("Puppet motor command {}: {}, {}", motor, motor_command, value);
+                    let motor_command = msg[null_pos + 1] as char;                   
+                    println!("Puppet motor command {}: {}", motor, motor_command);
 
                     if let Some(actuator) = actuators.get_mut(&motor.to_string()) {
                         match motor_command {
                             'C' => {
+                                let value = msg[null_pos + 2];
                                 actuator.contract_at(value as f32 / 255.0);
                             }
                             'E' => {
+                                let value = msg[null_pos + 2];
                                 actuator.expand_at(value as f32 / 255.0);
                             }
                             'S' => {
