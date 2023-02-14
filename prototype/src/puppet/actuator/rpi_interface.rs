@@ -1,3 +1,10 @@
+extern crate ads1x1x;
+extern crate embedded_hal;
+extern crate linux_embedded_hal;
+extern crate nb;
+extern crate adafruit_motorkit;
+extern crate pwm_pca9685;
+
 use ads1x1x::{
     channel, 
     Ads1x1x, 
@@ -18,8 +25,8 @@ type Adc = Ads1x1x<I2cInterface<I2cdev>, Ads1115, Resolution16Bit, ads1x1x::mode
 
 pub struct RPIInterfaceProps {
     pub pressure_i2c_dev: String,
-    pub contract_motor: Motor,
-    pub expand_motor: Motor
+    pub contract_motor: u16,
+    pub expand_motor: u16
 }
 
 pub struct RPIInterface {
@@ -29,11 +36,25 @@ pub struct RPIInterface {
     expand_valve: DcMotor,
     expand_pwm: Pca9685<I2cdev>
 }
+
+fn int_to_motor_enum(index: u16) -> Option<Motor> {
+    match index {
+        1 => Some(Motor::Motor1),
+        2 => Some(Motor::Motor2),
+        3 => Some(Motor::Motor3),
+        4 => Some(Motor::Motor4),
+        _ => None
+    }
+}
+
 impl RPIInterface {
     pub fn new(props: RPIInterfaceProps) -> Result<Box<dyn ActuatorInterface>,Box<dyn Error>> {
         let mut contract_pwm =  init_pwm(None)?;
         let mut expand_pwm =  init_pwm(None)?;
         
+        let contract_motor = int_to_motor_enum(props.contract_motor)?;
+        let expand_motor = int_to_motor_enum(props.expand_motor)?;
+
         let mut contract_valve = DcMotor::try_new(&mut contract_pwm, props.contract_motor)?;
         let mut expand_valve = DcMotor::try_new(&mut expand_pwm, props.expand_motor)?;
 

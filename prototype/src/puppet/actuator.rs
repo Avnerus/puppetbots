@@ -1,4 +1,6 @@
+#[cfg(not(target_os = "windows"))]
 pub mod rpi_interface;
+
 pub mod dummy_interface;
 
 #[derive(PartialEq)]

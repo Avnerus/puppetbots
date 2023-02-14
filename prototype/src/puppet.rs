@@ -6,26 +6,13 @@ use std::collections::HashMap;
 use std::str;
 use std::error::Error;
 
-use adafruit_motorkit::{Motor};
-
 mod actuator;
 use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
-use self::actuator::rpi_interface::{RPIInterface, RPIInterfaceProps};
 use self::actuator::dummy_interface::{DummyInterface, DummyInterfaceProps};
 
 use soft_error::{SoftError};
 
 use Config;
-
-fn int_to_motor_enum(index: u16) -> Option<Motor> {
-    match index {
-        1 => Some(Motor::Motor1),
-        2 => Some(Motor::Motor2),
-        3 => Some(Motor::Motor3),
-        4 => Some(Motor::Motor4),
-        _ => None
-    }
-}
 
 pub fn start(
     config: Arc<Config>,
@@ -38,12 +25,13 @@ pub fn start(
         println!("Creating actutor {:?}", actuator.name);
 
         let interface: Result<Box<dyn ActuatorInterface>, Box<dyn Error>> = match actuator.interface_type.as_str() {
+            #[cfg(not(target_os = "windows"))]
             "rpi" => {
-                RPIInterface::new(
-                        RPIInterfaceProps {
+                actuator::rpi_interface::RPIInterface::new(
+                        actuator::rpi_interface::RPIInterfaceProps {
                         pressure_i2c_dev: actuator.pressure_device.clone(),
-                        contract_motor: int_to_motor_enum(actuator.contract_motor).unwrap(),
-                        expand_motor: int_to_motor_enum(actuator.expand_motor).unwrap()
+                        contract_motor: actuator.contract_motor,
+                        expand_motor: actuator.expand_motor
                     }
                 )
             },

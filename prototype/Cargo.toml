@@ -14,6 +14,8 @@ serde = {version = "*", features = ["rc"]}
 serde_derive = {version = "*"}
 serde_json = {version = "*"}
 nb = { version = "*"}
+
+[target.'cfg(unix)'.dependencies]
 ads1x1x = { version = "*"}
 embedded-hal = { version = "*"}
 linux-embedded-hal = { version = "*"}
