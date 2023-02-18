@@ -1,5 +1,5 @@
 use std::{thread};
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use std::sync::mpsc;
 use std::sync::{Arc};
 use std::collections::HashMap;
@@ -47,13 +47,17 @@ pub fn start(
 
         match interface {
             Ok(result) => {
+                let (actuator_tx, actuator_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
+
                 let mut actuator = Actuator::new(
                     ActuatorProps {
                         name: actuator.name.clone(),
-                        interface: result
+                        interface: result,
+                        rx: actuator_rx,
+                        tx: puppet_tx.clone()
                     }
                 );
-                actuator.update();
+                actuator.start();
                 actuators.insert(actuator.name.to_string(), actuator);
             }
             Err(e) => {
@@ -63,8 +67,6 @@ pub fn start(
 
     }
 
-    let mut last_admin_update = Instant::now();
-    
     loop {
         if let Ok(msg) = server_rx.try_recv() {
             let command = msg[0] as char;
@@ -99,17 +101,6 @@ pub fn start(
                 _ => {
                     println!("Unknown puppet command! {}",command);
                 }
-            }
-        }
-        for actuator in actuators.values_mut() {
-            actuator.update();
-            if last_admin_update.elapsed().as_secs() >= 1 {
-                last_admin_update = Instant::now();
-                // println!("Admin update {}",actuator.pressure);
-                let mut message = format!("SP{}",actuator.name).as_bytes().to_vec();
-                message.extend(vec![0]);
-                message.extend(actuator.pressure.to_le_bytes().to_vec());
-                puppet_tx.send(message).unwrap();
             }
         }
         thread::sleep(Duration::from_millis(100));

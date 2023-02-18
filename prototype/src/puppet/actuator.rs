@@ -3,6 +3,11 @@ pub mod rpi_interface;
 
 pub mod dummy_interface;
 
+use std::sync::mpsc;
+use std::{thread};
+use std::time::{Duration, Instant};
+
+
 #[derive(PartialEq)]
 pub enum State {
     CONTRACTING,
@@ -12,14 +17,18 @@ pub enum State {
 
 pub struct ActuatorProps {
     pub name: String,
-    pub interface: Box<dyn ActuatorInterface>
+    pub interface: Box<dyn ActuatorInterface>,
+    pub rx: mpsc::Receiver<Vec<u8>>,
+    pub tx: mpsc::Sender<Vec<u8>>
 }
 
 pub struct Actuator {
     pub name: String,
     pub pressure: i16,
     pub state: State,
-    pub interface: Box<dyn ActuatorInterface>
+    pub interface: Box<dyn ActuatorInterface>,
+    rx: mpsc::Receiver<Vec<u8>>,
+    tx: mpsc::Sender<Vec<u8>>
 }
 
 pub trait ActuatorInterface {
@@ -38,10 +47,34 @@ impl Actuator {
         Actuator {
             name: props.name,
             interface: props.interface,
+            rx: props.rx,
+            tx: props.tx,
             pressure: 0,
             state: State::IDLE
         }
     } 
+    pub fn start(&mut self) {  
+        println!("Staring actuator {:?}",self.name);  
+        let mut last_admin_update = Instant::now();
+       
+        loop {
+
+            if let Ok(msg) = self.rx.try_recv() {
+                println!("Actuator command!");
+            }
+
+            self.update();
+            if last_admin_update.elapsed().as_secs() >= 1 {
+                last_admin_update = Instant::now();
+                println!("Admin update {}",self.pressure);
+                let mut message = format!("SP{}",self.name).as_bytes().to_vec();
+                message.extend(vec![0]);
+                message.extend(self.pressure.to_le_bytes().to_vec());
+                self.tx.send(message).unwrap();
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+    }
 }
 impl ActuatorInterface for Actuator {
 

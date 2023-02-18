@@ -62,7 +62,7 @@ fn main() {
         let config = Arc::clone(&config);
         thread::Builder::new().name("puppet".to_owned()).spawn(move || {
             puppet::start(
-                Arc::clone(&config),
+                config,
                 puppet_tx,
                 server_rx
             );
