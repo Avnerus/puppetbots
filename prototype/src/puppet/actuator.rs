@@ -6,6 +6,7 @@ pub mod dummy_interface;
 use std::sync::mpsc;
 use std::{thread};
 use std::time::{Duration, Instant};
+use async_std::task;
 
 
 #[derive(PartialEq)]
@@ -109,12 +110,29 @@ impl Actuator {
             thread::sleep(Duration::from_millis(10));
         }
     }
-    fn contract_at(&mut self, speed: f32) {
+    async fn contract_at(&mut self, speed: f32) {
         println!("Contracting at {}", speed);
         if speed == 0.0 {
             self.stop();
-        } else {
-            self.state = State::CONTRACTING;
+        } else {           
+            if speed != self.current_flow_speed {
+                let flow_change_time = (self.current_flow_speed - speed).abs() / self.flow_change_per_sec * 1000.0;
+                println!(
+                    "Should wait {:?}ms to go from speed {:?} to {:?}",
+                    flow_change_time,
+                    self.current_flow_speed,
+                    speed
+                );
+                if speed > self.current_flow_speed {
+                    self.flow_state = FlowState::INCREASING;
+                    self.interface.start_flow_increase();                    
+                } else {
+                    self.flow_state = FlowState::DECREASING;
+                    self.interface.start_flow_decrease();
+                }   
+                task::sleep(Duration::from_millis(flow_change_time as u64)).await;   
+            }
+            self.state = State::CONTRACTING;            
             self.interface.set_inlet_valve(speed);
             self.interface.set_outlet_valve(0.0);
         }     
