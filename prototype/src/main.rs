@@ -2,6 +2,8 @@ extern crate argparse;
 extern crate serde;
 extern crate serde_json;
 extern crate ws;
+extern crate async_std;
+
 #[macro_use]
 extern crate serde_derive;
 
@@ -26,8 +28,10 @@ pub struct ActuatorConfig {
     name: String,
     pressure_device: String,
     interface_type: String,
-    contract_motor: u16,
-    expand_motor: u16,
+    max_pressure: i16,
+    flow_change_per_sec: f32,
+    inlet_motor: u16,
+    outlet_motor: u16,
     speed_factor: f32
 }
 

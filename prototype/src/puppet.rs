@@ -10,9 +10,9 @@ mod actuator;
 use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
 use self::actuator::dummy_interface::{DummyInterface, DummyInterfaceProps};
 
-use soft_error::{SoftError};
+use crate::soft_error::{SoftError};
 
-use Config;
+use crate::Config;
 
 pub fn start(
     config: Arc<Config>,
@@ -20,11 +20,11 @@ pub fn start(
     server_rx: mpsc::Receiver<Vec<u8>>
 ) {
 
-    let mut actuators: HashMap<String, Actuator> = HashMap::new();
+    let mut actuators: HashMap<String, mpsc::Sender<actuator::ActuatorMessage>> = HashMap::new();
     for actuator in &config.actuators {
         println!("Creating actutor {:?}", actuator.name);
 
-        let interface: Result<Box<dyn ActuatorInterface>, Box<dyn Error>> = match actuator.interface_type.as_str() {
+        let interface: Result<Box<dyn ActuatorInterface + Send>, Box<dyn Error>> = match actuator.interface_type.as_str() {
             #[cfg(not(target_os = "windows"))]
             "rpi" => {
                 actuator::rpi_interface::RPIInterface::new(
@@ -47,18 +47,23 @@ pub fn start(
 
         match interface {
             Ok(result) => {
-                let (actuator_tx, actuator_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
+                let (actuator_tx, actuator_rx):
+                 (mpsc::Sender<actuator::ActuatorMessage>, mpsc::Receiver<actuator::ActuatorMessage>) = mpsc::channel();
 
                 let mut actuator = Actuator::new(
                     ActuatorProps {
                         name: actuator.name.clone(),
-                        interface: result,
+                        max_pressure: actuator.max_pressure,
+                        flow_change_per_sec: actuator.flow_change_per_sec,
+                        interface: result as Box<dyn ActuatorInterface + Send>,
                         rx: actuator_rx,
                         tx: puppet_tx.clone()
                     }
                 );
-                actuator.start();
-                actuators.insert(actuator.name.to_string(), actuator);
+                actuators.insert(actuator.name.to_string(), actuator_tx);
+                thread::Builder::new().name(actuator.name.to_owned()).spawn(move || {
+                    actuator.start();        
+                }).unwrap();
             }
             Err(e) => {
                 println!("Error initializing actuator interface: {:?} - {:?}", actuator.name, e);
@@ -77,18 +82,35 @@ pub fn start(
                     let motor_command = msg[null_pos + 1] as char;                   
                     println!("Puppet motor command {}: {}", motor, motor_command);
 
-                    if let Some(actuator) = actuators.get_mut(&motor.to_string()) {
+                    if let Some(actuator_tx) = actuators.get_mut(&motor.to_string()) {
                         match motor_command {
                             'C' => {
                                 let value = msg[null_pos + 2];
-                                actuator.contract_at(value as f32 / 255.0);
+                                println!("Speed: {:?}",value);
+                                actuator_tx.send(
+                                    actuator::ActuatorMessage {
+                                        set_state: actuator::State::CONTRACTING,
+                                        speed: value as f32 / 255.0
+                                    }
+                                ).unwrap();                   
                             }
                             'E' => {
                                 let value = msg[null_pos + 2];
-                                actuator.expand_at(value as f32 / 255.0);
+                                actuator_tx.send(
+                                    actuator::ActuatorMessage {
+                                        set_state: actuator::State::EXPANDING,
+                                        speed: value as f32 / 255.0
+                                    }
+                                ).unwrap(); 
+                            
                             }
                             'S' => {
-                                actuator.stop();
+                                actuator_tx.send(
+                                    actuator::ActuatorMessage {
+                                        set_state: actuator::State::IDLE,
+                                        speed: 1.0
+                                    }
+                                ).unwrap();                         
                             }
                             _ => {
                                 println!("Unknown actuator motor command! {}", motor_command);

@@ -1,6 +1,7 @@
 [package]
 name = "telepuppet_prototype"
 version = "0.1.0"
+edition = "2021"
 authors = ["Avner Peled <avner.peled@aalto.fi>"]
 
 [[bin]]
@@ -11,9 +12,12 @@ path = "src/main.rs"
 ws = { version = "*"}
 argparse = {version = "*"}
 serde = {version = "*", features = ["rc"]}
+log = "0.4.17"
 serde_derive = {version = "*"}
 serde_json = {version = "*"}
 nb = { version = "*"}
+async-std = { version = "*"}
+
 
 [target.'cfg(unix)'.dependencies]
 ads1x1x = { version = "*"}

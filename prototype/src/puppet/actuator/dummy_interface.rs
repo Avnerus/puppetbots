@@ -1,5 +1,5 @@
 use std::error::Error;
-use puppet::actuator::{ActuatorInterface};
+use crate::puppet::actuator::{ActuatorInterface};
 
 pub struct DummyInterfaceProps {
     pub speed_factor: f32
@@ -12,7 +12,7 @@ pub struct DummyInterface {
     contract_speed: f32
 }
 impl DummyInterface {
-    pub fn new(props: DummyInterfaceProps) -> Result<Box<dyn ActuatorInterface>,Box<dyn Error>> {
+    pub fn new(props: DummyInterfaceProps) -> Result<Box<dyn ActuatorInterface + Send>,Box<dyn Error>> {
         Ok(
             Box::new(DummyInterface {
                 speed_factor: props.speed_factor,
@@ -24,21 +24,21 @@ impl DummyInterface {
     } 
 }
 impl ActuatorInterface for DummyInterface {
-    fn contract_at(&mut self, speed: f32) {
+    fn set_inlet_valve(&mut self, speed: f32) {
         self.contract_speed = speed * self.speed_factor;
     }
-    fn expand_at(&mut self, speed: f32) {
+    fn set_outlet_valve(&mut self, speed: f32) {
         self.expand_speed = speed * self.speed_factor;
-    }
-    fn stop(&mut self) {
-        self.contract_speed = 0.0;
-        self.expand_speed = 0.0;
-
     }
     fn read_pressure(&mut self) -> i16 {
         self.pressure
     }
-
+    fn start_flow_increase(&mut self) {
+    }
+    fn start_flow_decrease(&mut self) {
+    }
+    fn maintain_current_flow(&mut self) {
+    }
     fn update(&mut self) {
         self.pressure = 
             self.pressure + 

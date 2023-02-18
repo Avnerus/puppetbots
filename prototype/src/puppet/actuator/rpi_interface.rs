@@ -26,15 +26,17 @@ type Adc = Ads1x1x<I2cInterface<I2cdev>, Ads1115, Resolution16Bit, ads1x1x::mode
 pub struct RPIInterfaceProps {
     pub pressure_i2c_dev: String,
     pub contract_motor: u16,
-    pub expand_motor: u16
+    pub expand_motor: u16,
+    pub flow_servo_channel: u16
 }
 
 pub struct RPIInterface {
     adc: Adc,
-    contract_valve: DcMotor,
-    contract_pwm: Pca9685<I2cdev>,
-    expand_valve: DcMotor,
-    expand_pwm: Pca9685<I2cdev>
+    inlet_valve: DcMotor,
+    inlet_pwm: Pca9685<I2cdev>,
+    outlet_valve: DcMotor,
+    outlet_pwm: Pca9685<I2cdev>,
+    flow_pwm: Pca9685<I2cdev>
 }
 
 fn int_to_motor_enum(index: u16) -> Option<Motor> {
@@ -48,18 +50,21 @@ fn int_to_motor_enum(index: u16) -> Option<Motor> {
 }
 
 impl RPIInterface {
-    pub fn new(props: RPIInterfaceProps) -> Result<Box<dyn ActuatorInterface>,Box<dyn Error>> {
-        let mut contract_pwm =  init_pwm(None)?;
-        let mut expand_pwm =  init_pwm(None)?;
+    pub fn new(props: RPIInterfaceProps) -> Result<Box<dyn ActuatorInterface + Send>,Box<dyn Error>> {
+        let mut inlet_pwm =  init_pwm(None)?;
+        let mut outlet_pwm =  init_pwm(None)?;
         
-        let contract_motor = int_to_motor_enum(props.contract_motor)?;
-        let expand_motor = int_to_motor_enum(props.expand_motor)?;
+        let inlet_motor = int_to_motor_enum(props.inlet_motor)?;
+        let outlet_motor = int_to_motor_enum(props.outlet_motor)?;
 
-        let mut contract_valve = DcMotor::try_new(&mut contract_pwm, props.contract_motor)?;
-        let mut expand_valve = DcMotor::try_new(&mut expand_pwm, props.expand_motor)?;
+        let mut inlet_valve = DcMotor::try_new(&mut inlet_pwm, props.inlet_motor)?;
+        let mut outlet_valve = DcMotor::try_new(&mut expand_pwm, props.outlet_motor)?;
 
-        expand_valve.set_throttle(&mut expand_pwm, 0.0)?;
-        contract_valve.set_throttle(&mut contract_pwm, 0.0)?;
+        inlet_valve.set_throttle(&mut inlet_pwm, 0.0)?;
+        outlet_valve.set_throttle(&mut outlet_pwm, 0.0)?;
+
+        /* This is a placeholder */
+        let mut flow_pwm = init_pwm(None);
 
         let mut adc = Ads1x1x::new_ads1115(
             I2cdev::new(props.pressure_i2c_dev)?,
@@ -72,8 +77,9 @@ impl RPIInterface {
                     adc,
                     contract_pwm,
                     expand_pwm,
-                    contract_valve,
-                    expand_valve
+                    inlet_valve,
+                    outlet_valve,
+                    flow_pwm
                 })
             ),
             Err(e) => Err(format!("I2CError setting ADC range {:?}",e))?
@@ -81,25 +87,21 @@ impl RPIInterface {
     } 
 }
 impl ActuatorInterface for RPIInterface {
-    fn contract_at(&mut self, speed: f32) {
-
-        self.contract_valve.set_throttle(&mut self.contract_pwm, speed).unwrap();
-        self.expand_valve.set_throttle(&mut self.expand_pwm, 0.0).unwrap();
-
+    fn set_inlet_valve(&mut self, speed: f32) {
+        self.inlet_valve.set_throttle(&mut self.inlet_pwm, speed).unwrap();
     }
-    fn expand_at(&mut self, speed: f32) {
-        self.expand_valve.set_throttle(&mut self.expand_pwm, speed).unwrap();
-        self.contract_valve.set_throttle(&mut self.contract_pwm, 0.0).unwrap();
-    }
-    fn stop(&mut self) {
-        self.expand_valve.set_throttle(&mut self.expand_pwm, 0.0).unwrap();
-        self.contract_valve.set_throttle(&mut self.contract_pwm, 0.0).unwrap();
+    fn set_outlet_valve(&mut self, speed: f32) {
+        self.outlet_valve.set_throttle(&mut self.outlet_pwm, speed).unwrap();
     }
     fn read_pressure(&mut self) -> i16 {
         block!(self.adc.read(&mut channel::DifferentialA0A1)).unwrap()
     }
-
+    fn start_flow_increase(&mut self) {
+    }
+    fn start_flow_decrease(&mut self) {
+    }
+    fn maintain_current_flow(&mut self) {
+    }
     fn update(&mut self) {
     }
-
 }
