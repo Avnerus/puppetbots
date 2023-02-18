@@ -49,7 +49,7 @@ pub struct Actuator {
     tx: mpsc::Sender<Vec<u8>>
 }
 
-pub trait ActuatorInterface: Send {
+pub trait ActuatorInterface {
     fn set_inlet_valve(&mut self, throttle:f32);
     fn set_outlet_valve(&mut self, throttle:f32);
     fn read_pressure(&mut self) -> i16;
