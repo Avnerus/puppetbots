@@ -3,11 +3,10 @@ pub mod rpi_interface;
 
 pub mod dummy_interface;
 
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 use std::{thread};
 use std::time::{Duration, Instant};
-use async_std::task;
-
+use std::collections::LinkedList;
 
 #[derive(PartialEq)]
 pub enum State {
@@ -35,6 +34,11 @@ pub struct ActuatorProps {
 pub struct ActuatorMessage {
     pub set_state: State,
     pub speed: f32    
+}
+
+struct ActuatorAction {
+    pub msg: ActuatorMessage,
+    pub delay: Duration
 }
 
 pub struct Actuator {
@@ -77,31 +81,65 @@ impl Actuator {
         }
     } 
     pub fn start(&mut self) {  
-        println!("Staring actuator {:?}",self.name);  
+        println!("Starting actuator {:?}",self.name);  
+
+        let mut action_queue:LinkedList<Box<ActuatorAction>> = LinkedList::new();
+
         let mut last_admin_update = Instant::now();
-        let mut last_message:Option<Instant> = None;
+        let mut last_message_instant:Option<Instant> = None;
+        
+        let flow_control_pause = Arc::new(Mutex::new(false)); 
+        let mut waiting_action:Option<Box<ActuatorAction>> = None;
+        let mut action_time = Instant::now();
        
         loop {
 
             if let Ok(msg) = self.rx.try_recv() {
-                println!("Staring actuator {:?}",self.name);  
-                match msg.set_state {
-                    State::CONTRACTING => {
-                        self.contract_at(msg.speed);
-                    },
-                    State::EXPANDING => {
-                        self.expand_at(msg.speed);
-                    },
-                    State::IDLE => {
-                        self.stop();
-                    }                    
-                }
+                let delay = match last_message_instant {
+                    Some(instant) => Instant::now().duration_since(instant),
+                    None => Duration::ZERO
+                };
+                action_queue.push_back(
+                    Box::new(ActuatorAction {
+                        msg,
+                        delay
+                    })
+                );
+                last_message_instant = Some(Instant::now());
             }
+            let paused = flow_control_pause.lock().unwrap();
+            if !*paused {
+
+                if Option::is_none(&waiting_action) {
+                    if let Some(action) = action_queue.pop_front() {
+                        let delay = action.delay;
+                        waiting_action = Some(action);
+                        println!("Delaying action for {:?}", delay);
+                        action_time = Instant::now() + delay;
+                    }       
+                }
+                else if Instant::now() >= action_time {    
+                    println!("Performing action!");                     
+                    let action = waiting_action.unwrap();
+                    match action.msg.set_state {
+                        State::CONTRACTING => {
+                            self.contract_at(action.msg.speed, Arc::clone(&flow_control_pause));
+                        },
+                        State::EXPANDING => {
+                            self.expand_at(action.msg.speed);
+                        },
+                        State::IDLE => {
+                            self.stop();
+                        }                    
+                    }
+                    waiting_action = None;
+                }    
+            } 
 
             self.update();
             if last_admin_update.elapsed().as_secs() >= 1 {
                 last_admin_update = Instant::now();
-                println!("Admin update {}",self.pressure);
+                // println!("Admin update {}",self.pressure);
                 let mut message = format!("SP{}",self.name).as_bytes().to_vec();
                 message.extend(vec![0]);
                 message.extend(self.pressure.to_le_bytes().to_vec());
@@ -110,7 +148,7 @@ impl Actuator {
             thread::sleep(Duration::from_millis(10));
         }
     }
-    async fn contract_at(&mut self, speed: f32) {
+    fn contract_at(&mut self, speed: f32, flow_signal:Arc<Mutex<bool>>) {
         println!("Contracting at {}", speed);
         if speed == 0.0 {
             self.stop();
@@ -130,7 +168,13 @@ impl Actuator {
                     self.flow_state = FlowState::DECREASING;
                     self.interface.start_flow_decrease();
                 }   
-                task::sleep(Duration::from_millis(flow_change_time as u64)).await;   
+                thread::spawn(move || {
+                    { *(flow_signal.lock().unwrap()) = true; }                    
+                    thread::sleep(Duration::from_millis(flow_change_time as u64));
+                    println!("Done waiting");                  
+                    { *(flow_signal.lock().unwrap()) = false; }                    
+
+                });               
             }
             self.state = State::CONTRACTING;            
             self.interface.set_inlet_valve(speed);
