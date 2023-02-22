@@ -30,8 +30,9 @@ pub fn start(
                 actuator::rpi_interface::RPIInterface::new(
                         actuator::rpi_interface::RPIInterfaceProps {
                         pressure_i2c_dev: actuator.pressure_device.clone(),
-                        contract_motor: actuator.contract_motor,
-                        expand_motor: actuator.expand_motor
+                        inlet_motor: actuator.inlet_motor,
+                        outlet_motor: actuator.outlet_motor,
+                        flow_control_servo: actuator.flow_control_servo
                     }
                 )
             },

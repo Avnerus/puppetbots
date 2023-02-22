@@ -5,14 +5,15 @@
     },
     "actuators": [
       {
-        "name": "Dummy",
-        "interfaceType": "dummy",
+        "name": "test",
+        "interfaceType": "rpi",
         "speedFactor": 1.0,
         "pressureDevice": "/dev/i2c-1",
         "maxPressure": 600,
         "flowChangePerSec": 0.1, 
         "inletMotor": 1,
-        "outletMotor": 2
+        "outletMotor": 2,
+        "flowControlServo": 1
       }
     ]
 }

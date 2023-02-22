@@ -2,7 +2,6 @@ extern crate argparse;
 extern crate serde;
 extern crate serde_json;
 extern crate ws;
-extern crate async_std;
 
 #[macro_use]
 extern crate serde_derive;
@@ -16,6 +15,7 @@ use std::sync::mpsc;
 mod ws_server;
 mod soft_error;
 mod puppet;
+mod util;
 
 #[derive(Deserialize, Serialize)]
 struct ServerConfig {
@@ -32,6 +32,7 @@ pub struct ActuatorConfig {
     flow_change_per_sec: f32,
     inlet_motor: u16,
     outlet_motor: u16,
+    flow_control_servo: u16,
     speed_factor: f32
 }
 

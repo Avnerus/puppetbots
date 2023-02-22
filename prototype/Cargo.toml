@@ -16,8 +16,6 @@ log = "0.4.17"
 serde_derive = {version = "*"}
 serde_json = {version = "*"}
 nb = { version = "*"}
-async-std = { version = "*", features = ["attributes"]}
-
 
 [target.'cfg(unix)'.dependencies]
 ads1x1x = { version = "*"}
