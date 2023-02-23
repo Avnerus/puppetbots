@@ -9,7 +9,7 @@
         "interfaceType": "dummy",
         "speedFactor": 1.0,
         "pressureDevice": "/dev/i2c-1",
-        "maxPressure": 600,
+        "maxPressure": 800,
         "flowChangePerSec": 0.5, 
         "inletMotor": 1,
         "outletMotor": 2,

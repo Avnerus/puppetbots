@@ -14,12 +14,12 @@ const Container = styled.div`
 
 const ConfigBox = styled.div`
   width: 800px;
-  height: 700px;
+  height: 200px;
   margin-bottom: 20px;
 `
 const JsonBox = styled.div`
   width: 800px;
-  height: 700px;
+  max-height: 700px;
   margin-bottom: 20px;
 `
 const JsonText = styled.textarea`
@@ -36,12 +36,19 @@ const ButtonsRow = styled.div`
   flex-direction: row;
 `
 
+const PressureBox = styled.div`
+  display: flex;
+  flex-direction: column;
+`
+
 
 function App() {
   
   const config = useConfigEditorStore((state) => state.config);
   const json = useConfigEditorStore((state) => state.json);
   const socket = useConfigEditorStore((state) => state.socket);
+  const pressures = useConfigEditorStore((state) => state.pressures);
+
 
   const loadConfig= () => {
     const command = 'CGET';
@@ -81,6 +88,12 @@ function App() {
       <ButtonsRow>
           <button onClick={loadConfig}>Load from device</button>
       </ButtonsRow>
+      <PressureBox>
+        <h2>Pressure values</h2>
+        <ul>
+        {Object.entries(pressures).map(([key, value]) => <li key={key}>{key}: {value}</li>)}
+        </ul>
+      </PressureBox>
     </Container>
   )
 }

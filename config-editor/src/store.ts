@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 
-const socket = new ReconnectingWebSocket('ws://localhost:3012');
+const socket = new ReconnectingWebSocket('ws://192.168.1.228:3012');
 socket.binaryType = "arraybuffer";
 
 interface ConfigEditorState {
@@ -17,10 +17,18 @@ const useConfigEditorStore = create<ConfigEditorState>()(
         socket: undefined,
         config: { empty: 1 },
         json: '{"empty": 1"}',
+        pressures: {},
         setConfig: (config) => set((state) => ({ config })),
         setJson: (json) => set((state) => ({ json })),
         setSocket: (socket) => set((state) => ({ socket })),
-      }),
+        setPressure: (name, value) => set((state) => ({
+          pressures: {
+            ...state.pressures,            
+            [name]: value
+            
+          }               
+        })
+      )}),
       {
         name: 'config-editor-storage',
       }
@@ -52,10 +60,10 @@ socket.addEventListener('open', () => {
 })
 
 socket.addEventListener('message', (msg) => {
-  console.log("Message!", msg.data);
+  //console.log("Message!", msg.data);
   if (msg.data instanceof ArrayBuffer) {
       const prefix = String.fromCharCode(new Uint8Array(msg.data,0,1)[0]);
-      console.log("Array buffer prefix", prefix);
+   //   console.log("Array buffer prefix", prefix);
 
       if (prefix == 'F') {
           // Parse it
@@ -64,6 +72,13 @@ socket.addEventListener('message', (msg) => {
           const config = JSON.parse(json);
           useConfigEditorStore.getState().setConfig(config);
           useConfigEditorStore.getState().setJson(json);
+      }
+      else if (prefix == 'S') {
+        const chars = new Uint8Array(msg.data, 2);
+        const end = chars.findIndex(n => n == 0);
+        const name = new TextDecoder("utf-8").decode(chars.slice(0,end));
+        const value = new DataView(msg.data,end + 2).getInt16(1, true);   
+        useConfigEditorStore.getState().setPressure(name, value)
       }
   }
 })
