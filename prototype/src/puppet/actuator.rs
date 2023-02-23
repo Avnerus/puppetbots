@@ -201,7 +201,7 @@ impl Actuator {
                     let mut int = interface_c.lock().unwrap();
                     println!("Unlocked interface and stopping/");                  
                     int.maintain_current_flow();
-                    int.set_inlet_valve(speed);
+                    int.set_inlet_valve(1.0);
                     int.set_outlet_valve(0.0);
 
                     { *(flow_pause.lock().unwrap()) = false; }                
@@ -209,7 +209,7 @@ impl Actuator {
                 });               
             } else {
                 let mut int = self.interface.lock().unwrap();
-                int.set_inlet_valve(speed);
+                int.set_inlet_valve(1.0);
                 int.set_outlet_valve(0.0);
             }
             self.state = State::CONTRACTING;            
