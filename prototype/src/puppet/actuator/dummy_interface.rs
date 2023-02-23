@@ -12,7 +12,7 @@ pub struct DummyInterface {
     contract_speed: f32
 }
 impl DummyInterface {
-    pub fn new(props: DummyInterfaceProps) -> Result<Box<dyn ActuatorInterface + Send>,Box<dyn Error>> {
+    pub fn new(props: DummyInterfaceProps) -> Result<Box<dyn ActuatorInterface + Send + Sync>,Box<dyn Error>> {
         Ok(
             Box::new(DummyInterface {
                 speed_factor: props.speed_factor,

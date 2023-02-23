@@ -24,7 +24,7 @@ pub fn start(
     for actuator in &config.actuators {
         println!("Creating actutor {:?}", actuator.name);
 
-        let interface: Result<Box<dyn ActuatorInterface + Send>, Box<dyn Error>> = match actuator.interface_type.as_str() {
+        let interface: Result<Box<dyn ActuatorInterface + Send + Sync>, Box<dyn Error>> = match actuator.interface_type.as_str() {
             #[cfg(not(target_os = "windows"))]
             "rpi" => {
                 actuator::rpi_interface::RPIInterface::new(
@@ -56,7 +56,7 @@ pub fn start(
                         name: actuator.name.clone(),
                         max_pressure: actuator.max_pressure,
                         flow_change_per_sec: actuator.flow_change_per_sec,
-                        interface: result as Box<dyn ActuatorInterface + Send>,
+                        interface: result as Box<dyn ActuatorInterface + Send + Sync>,
                         rx: actuator_rx,
                         tx: puppet_tx.clone()
                     }
