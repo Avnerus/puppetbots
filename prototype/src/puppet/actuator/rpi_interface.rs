@@ -63,7 +63,7 @@ fn int_to_channel(index: u16) -> Option<Channel> {
 }
 
 impl RPIInterface {
-    pub fn new(props: RPIInterfaceProps) -> Result<Box<dyn ActuatorInterface + Send>,Box<dyn Error>> {
+    pub fn new(props: RPIInterfaceProps) -> Result<Box<dyn ActuatorInterface + Send + Sync>,Box<dyn Error>> {
         let mut inlet_pwm =  init_pwm(None)?;
         let mut outlet_pwm =  init_pwm(None)?;
         
@@ -76,7 +76,7 @@ impl RPIInterface {
         inlet_valve.set_throttle(&mut inlet_pwm, 0.0)?;
         outlet_valve.set_throttle(&mut outlet_pwm, 0.0)?;
 
-        let mut servo_kit = AdafruitServoKit::new();
+        let servo_kit = AdafruitServoKit::new();
         let flow_control_channel = int_to_channel(props.flow_control_servo).ok_or("Invalid servo index")?;
 
         let mut adc = Ads1x1x::new_ads1115(
@@ -112,10 +112,13 @@ impl ActuatorInterface for RPIInterface {
         block!(self.adc.read(&mut channel::DifferentialA0A1)).unwrap()
     }
     fn start_flow_increase(&mut self) {
+        self.servo_kit.set_angle(0, self.flow_control_channel);
     }
     fn start_flow_decrease(&mut self) {
+        self.servo_kit.set_angle(180, self.flow_control_channel);
     }
     fn maintain_current_flow(&mut self) {
+        self.servo_kit.set_angle(101, self.flow_control_channel);
     }
     fn update(&mut self) {
     }

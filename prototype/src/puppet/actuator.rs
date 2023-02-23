@@ -24,7 +24,7 @@ pub enum FlowState {
 
 pub struct ActuatorProps {
     pub name: String,
-    pub interface: Box<dyn ActuatorInterface + Send>,
+    pub interface: Box<dyn ActuatorInterface + Send + Sync>,
     pub flow_change_per_sec: f32,
     pub max_pressure: i16,
     pub rx: mpsc::Receiver<ActuatorMessage>,
@@ -48,7 +48,7 @@ pub struct Actuator {
     pub flow_state: FlowState, 
     pub flow_change_per_sec: f32,
     pub max_pressure: i16,
-    pub interface: Box<dyn ActuatorInterface + Send>,
+    pub interface: Arc<Mutex<Box<dyn ActuatorInterface + Send + Sync>>>,
     rx: mpsc::Receiver<ActuatorMessage>,
     tx: mpsc::Sender<Vec<u8>>
 }
@@ -67,7 +67,7 @@ impl Actuator {
     pub fn new(props: ActuatorProps) -> Self {
         Actuator {
             name: props.name,
-            interface: props.interface,
+            interface: Arc::new(Mutex::new(props.interface)),
             rx: props.rx,
             tx: props.tx,
             pressure: 0,
@@ -89,7 +89,6 @@ impl Actuator {
 
         // 0 means that the servo valve starts as closed. 
         let current_flow_speed = Arc::new(Mutex::new(0.0));
-
 
         let mut waiting_action:Option<Box<ActuatorAction>> = None;
         let mut action_time = Instant::now();
@@ -115,8 +114,8 @@ impl Actuator {
                 last_message_instant = Some(Instant::now());
             }
             let paused = flow_control_pause.lock().unwrap();
-            if !*paused {
-
+            if !(*paused) {
+                drop(paused);
                 if Option::is_none(&waiting_action) {
                     if let Some(action) = action_queue.pop_front() {
                         let delay = action.delay;
@@ -145,12 +144,13 @@ impl Actuator {
                     }
                     waiting_action = None;
                 }    
-            } 
-
+            } else {
+                drop(paused);
+            }
             self.update();
             if last_admin_update.elapsed().as_secs() >= 1 {
                 last_admin_update = Instant::now();
-                // println!("Admin update {}",self.pressure);
+                //println!("Admin update {}",self.pressure);
                 let mut message = format!("SP{}",self.name).as_bytes().to_vec();
                 message.extend(vec![0]);
                 message.extend(self.pressure.to_le_bytes().to_vec());
@@ -159,7 +159,11 @@ impl Actuator {
             thread::sleep(Duration::from_millis(10));
         }
     }
-    fn contract_at(&mut self, speed: f32, flow_signal:Arc<Mutex<bool>>, current_flow_speed:Arc<Mutex<f32>>) {
+    fn contract_at(
+        &mut self, 
+        speed: f32, flow_pause:Arc<Mutex<bool>>, 
+        current_flow_speed:Arc<Mutex<f32>>
+    ) {
         println!("Contracting at {}", speed);
         if speed == 0.0 {
             self.stop();
@@ -173,28 +177,42 @@ impl Actuator {
                     *flow_speed,
                     speed
                 );
+                let mut int = self.interface.lock().unwrap();
                 if speed > *flow_speed {
                     self.flow_state = FlowState::INCREASING;
-                    self.interface.start_flow_increase();                    
+                    int.start_flow_increase();                    
                 } else {
                     self.flow_state = FlowState::DECREASING;
-                    self.interface.start_flow_decrease();
+                    int.start_flow_decrease();
                 }   
                 drop(flow_speed);
+                drop(int);
                 let flow_speed_c = Arc::clone(&current_flow_speed);
+                let interface_c = Arc::clone(&self.interface);
 
                 thread::spawn(move || {
-                    { *(flow_signal.lock().unwrap()) = true; }                    
+                    { *(flow_pause.lock().unwrap()) = true; }                
+                    println!("Start waiting");
+
                     thread::sleep(Duration::from_millis(flow_change_time as u64));
                     { *(flow_speed_c.lock().unwrap()) = speed; }                
                     println!("Done waiting");                  
-                    { *(flow_signal.lock().unwrap()) = false; }                    
 
+                    let mut int = interface_c.lock().unwrap();
+                    println!("Unlocked interface and stopping/");                  
+                    int.maintain_current_flow();
+                    int.set_inlet_valve(1.0);
+                    int.set_outlet_valve(0.0);
+
+                    { *(flow_pause.lock().unwrap()) = false; }                
+                    println!("Unlocked flow signal");
                 });               
+            } else {
+                let mut int = self.interface.lock().unwrap();
+                int.set_inlet_valve(1.0);
+                int.set_outlet_valve(0.0);
             }
             self.state = State::CONTRACTING;            
-            self.interface.set_inlet_valve(speed);
-            self.interface.set_outlet_valve(0.0);
         }     
     }
     fn expand_at(&mut self, speed: f32) {
@@ -202,15 +220,17 @@ impl Actuator {
         if speed == 0.0 {
             self.stop();
         } else {
+            let mut int = self.interface.lock().unwrap();
             self.state = State::EXPANDING;
-            self.interface.set_inlet_valve(0.0);
-            self.interface.set_outlet_valve(speed);
+            int.set_inlet_valve(0.0);
+            int.set_outlet_valve(speed);
         }  
     }
     fn stop(&mut self) {
         println!("Stopping actuator");
-        self.interface.set_inlet_valve(0.0);
-        self.interface.set_outlet_valve(0.0);
+        let mut int = self.interface.lock().unwrap();
+        int.set_inlet_valve(0.0);
+        int.set_outlet_valve(0.0);
         self.state = State::IDLE;
     }
     fn update(&mut self) {
@@ -221,6 +241,7 @@ impl Actuator {
         } 
     }
     fn read_pressure(&mut self) -> i16 {
-        self.interface.read_pressure()
+        let mut int = self.interface.lock().unwrap();
+        int.read_pressure()
     }
 }
