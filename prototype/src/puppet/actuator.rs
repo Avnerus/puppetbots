@@ -114,8 +114,8 @@ impl Actuator {
                 last_message_instant = Some(Instant::now());
             }
             let paused = flow_control_pause.lock().unwrap();
-            if !*paused {
-
+            if !(*paused) {
+                drop(paused);
                 if Option::is_none(&waiting_action) {
                     if let Some(action) = action_queue.pop_front() {
                         let delay = action.delay;
@@ -144,8 +144,9 @@ impl Actuator {
                     }
                     waiting_action = None;
                 }    
-            } 
-
+            } else {
+                drop(paused);
+            }
             self.update();
             if last_admin_update.elapsed().as_secs() >= 1 {
                 last_admin_update = Instant::now();
@@ -160,7 +161,7 @@ impl Actuator {
     }
     fn contract_at(
         &mut self, 
-        speed: f32, flow_signal:Arc<Mutex<bool>>, 
+        speed: f32, flow_pause:Arc<Mutex<bool>>, 
         current_flow_speed:Arc<Mutex<f32>>
     ) {
         println!("Contracting at {}", speed);
@@ -190,16 +191,21 @@ impl Actuator {
                 let interface_c = Arc::clone(&self.interface);
 
                 thread::spawn(move || {
-                    { *(flow_signal.lock().unwrap()) = true; }                    
+                    { *(flow_pause.lock().unwrap()) = true; }                
+                    println!("Start waiting");
+
                     thread::sleep(Duration::from_millis(flow_change_time as u64));
                     { *(flow_speed_c.lock().unwrap()) = speed; }                
                     println!("Done waiting");                  
-                    { *(flow_signal.lock().unwrap()) = false; }                    
+
                     let mut int = interface_c.lock().unwrap();
+                    println!("Unlocked interface and stopping/");                  
                     int.maintain_current_flow();
                     int.set_inlet_valve(speed);
                     int.set_outlet_valve(0.0);
 
+                    { *(flow_pause.lock().unwrap()) = false; }                
+                    println!("Unlocked flow signal");
                 });               
             } else {
                 let mut int = self.interface.lock().unwrap();
