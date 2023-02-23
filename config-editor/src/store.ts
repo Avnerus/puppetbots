@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 
+const socket = new ReconnectingWebSocket('ws://localhost:3012');
+socket.binaryType = "arraybuffer";
+
 interface ConfigEditorState {
   socket?: WebSocket
   config: any
@@ -25,8 +28,7 @@ const useConfigEditorStore = create<ConfigEditorState>()(
   )
 )
 
-const socket = new ReconnectingWebSocket('ws://localhost:3012');
-socket.binaryType = "arraybuffer";
+
 
 function sendValueCommand(command, ...values) {
     let buffer = new ArrayBuffer(command.length + values.length);
