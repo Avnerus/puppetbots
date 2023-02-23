@@ -150,7 +150,7 @@ impl Actuator {
             self.update();
             if last_admin_update.elapsed().as_secs() >= 1 {
                 last_admin_update = Instant::now();
-                // println!("Admin update {}",self.pressure);
+                //println!("Admin update {}",self.pressure);
                 let mut message = format!("SP{}",self.name).as_bytes().to_vec();
                 message.extend(vec![0]);
                 message.extend(self.pressure.to_le_bytes().to_vec());
