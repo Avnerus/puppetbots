@@ -22,6 +22,11 @@ pub enum FlowState {
     IDLE
 }
 
+pub struct ActuatorFlow {
+    pub state: FlowState,
+    pub speed: f32
+}
+
 pub struct ActuatorProps {
     pub name: String,
     pub interface: Box<dyn ActuatorInterface + Send + Sync>,
@@ -45,7 +50,7 @@ pub struct Actuator {
     pub name: String,
     pub pressure: i16,
     pub state: State,
-    pub flow_state: FlowState, 
+    pub flow_state: Arc<Mutex<ActuatorFlow>>,
     pub flow_change_per_sec: f32,
     pub max_pressure: i16,
     pub interface: Arc<Mutex<Box<dyn ActuatorInterface + Send + Sync>>>,
@@ -68,13 +73,18 @@ impl Actuator {
         Actuator {
             name: props.name,
             interface: Arc::new(Mutex::new(props.interface)),
+            flow_state: Arc::new(Mutex::new({
+                ActuatorFlow {
+                    state: FlowState::IDLE,
+                    speed: 0.0
+                }
+            })),
             rx: props.rx,
             tx: props.tx,
             pressure: 0,
             max_pressure: props.max_pressure,
             flow_change_per_sec: props.flow_change_per_sec,
             state: State::IDLE,
-            flow_state: FlowState::IDLE
         }
     } 
     pub fn start(&mut self) {  
@@ -85,11 +95,6 @@ impl Actuator {
         let mut last_admin_update = Instant::now();
         let mut last_message_instant:Option<Instant> = None;
         
-        let flow_control_pause = Arc::new(Mutex::new(false)); 
-
-        // 0 means that the servo valve starts as closed. 
-        let current_flow_speed = Arc::new(Mutex::new(0.0));
-
         let mut waiting_action:Option<Box<ActuatorAction>> = None;
         let mut action_time = Instant::now();
        
@@ -113,9 +118,8 @@ impl Actuator {
                 );
                 last_message_instant = Some(Instant::now());
             }
-            let paused = flow_control_pause.lock().unwrap();
-            if !(*paused) {
-                drop(paused);
+            // Only process actions after flow changes (Automatically unlocks after the 'if')
+            if self.flow_state.lock().unwrap().state == FlowState::IDLE {
                 if Option::is_none(&waiting_action) {
                     if let Some(action) = action_queue.pop_front() {
                         let delay = action.delay;
@@ -129,11 +133,7 @@ impl Actuator {
                     let action = waiting_action.unwrap();
                     match action.msg.set_state {
                         State::CONTRACTING => {
-                            self.contract_at(
-                                action.msg.speed,
-                                Arc::clone(&flow_control_pause),
-                                Arc::clone(&current_flow_speed)
-                            );
+                            self.contract_at(action.msg.speed);
                         },
                         State::EXPANDING => {
                             self.expand_at(action.msg.speed);
@@ -144,8 +144,6 @@ impl Actuator {
                     }
                     waiting_action = None;
                 }    
-            } else {
-                drop(paused);
             }
             self.update();
             if last_admin_update.elapsed().as_secs() >= 1 {
@@ -160,59 +158,50 @@ impl Actuator {
         }
     }
     fn contract_at(
-        &mut self, 
-        speed: f32, flow_pause:Arc<Mutex<bool>>, 
-        current_flow_speed:Arc<Mutex<f32>>
+        &mut self,
+        speed: f32
     ) {
         println!("Contracting at {}", speed);
         if speed == 0.0 {
             self.stop();
         } else {           
-            let flow_speed = current_flow_speed.lock().unwrap();
-            if speed != *flow_speed {
-                let flow_change_time = (*flow_speed - speed).abs() / self.flow_change_per_sec * 1000.0;
-                println!(
-                    "Should wait {:?}ms to go from speed {:?} to {:?}",
-                    flow_change_time,
-                    *flow_speed,
-                    speed
-                );
-                let mut int = self.interface.lock().unwrap();
-                if speed > *flow_speed {
-                    self.flow_state = FlowState::INCREASING;
-                    int.start_flow_increase();                    
-                } else {
-                    self.flow_state = FlowState::DECREASING;
-                    int.start_flow_decrease();
-                }   
-                drop(flow_speed);
-                drop(int);
-                let flow_speed_c = Arc::clone(&current_flow_speed);
-                let interface_c = Arc::clone(&self.interface);
+            self.state = State::CONTRACTING;            
 
-                thread::spawn(move || {
-                    { *(flow_pause.lock().unwrap()) = true; }                
-                    println!("Start waiting");
+            let flow_state  = Arc::clone(&self.flow_state);
+            let interface = Arc::clone(&self.interface);
+            let flow_change = self.flow_change_per_sec;
 
-                    thread::sleep(Duration::from_millis(flow_change_time as u64));
-                    { *(flow_speed_c.lock().unwrap()) = speed; }                
-                    println!("Done waiting");                  
+            thread::spawn(move || {
+                let mut flow_change_time = 0.0;
+                {
+                    let mut state = flow_state.lock().unwrap();
+                    if speed != state.speed {
+                        flow_change_time = (state.speed- speed).abs() / flow_change * 1000.0;
+                        println!(
+                            "Should wait {:?}ms to go from speed {:?} to {:?}",
+                            flow_change_time,
+                            state.speed,
+                            speed
+                        );
+                    }
+                    if speed > state.speed {
+                        state.state = FlowState::INCREASING;
+                        interface.lock().unwrap().start_flow_increase();                    
+                    } else {
+                        state.state = FlowState::DECREASING;
+                        interface.lock().unwrap().start_flow_decrease();                    
+                    }   
+                }
+                thread::sleep(Duration::from_millis(flow_change_time as u64));
+                println!("Done waiting");                  
 
-                    let mut int = interface_c.lock().unwrap();
-                    println!("Unlocked interface and stopping/");                  
-                    int.maintain_current_flow();
-                    int.set_inlet_valve(1.0);
-                    int.set_outlet_valve(0.0);
-
-                    { *(flow_pause.lock().unwrap()) = false; }                
-                    println!("Unlocked flow signal");
-                });               
-            } else {
-                let mut int = self.interface.lock().unwrap();
+                let mut int = interface.lock().unwrap();
+                int.maintain_current_flow();
                 int.set_inlet_valve(1.0);
                 int.set_outlet_valve(0.0);
-            }
-            self.state = State::CONTRACTING;            
+                flow_state.lock().unwrap().state = FlowState::IDLE;
+                println!("Unlocked flow signal");
+            });               
         }     
     }
     fn expand_at(&mut self, speed: f32) {
@@ -241,7 +230,6 @@ impl Actuator {
         } 
     }
     fn read_pressure(&mut self) -> i16 {
-        let mut int = self.interface.lock().unwrap();
-        int.read_pressure()
+        self.interface.lock().unwrap().read_pressure()
     }
 }
