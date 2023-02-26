@@ -97,6 +97,8 @@ impl Actuator {
         
         let mut waiting_action:Option<Box<ActuatorAction>> = None;
         let mut action_time = Instant::now();
+
+        self.stop();
        
         loop {
 
@@ -199,7 +201,10 @@ impl Actuator {
                 int.maintain_current_flow();
                 int.set_inlet_valve(1.0);
                 int.set_outlet_valve(0.0);
+
                 flow_state.lock().unwrap().state = FlowState::IDLE;
+                flow_state.lock().unwrap().speed = speed;
+
                 println!("Unlocked flow signal");
             });               
         }     
