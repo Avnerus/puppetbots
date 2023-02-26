@@ -2,7 +2,9 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 
-const socket = new ReconnectingWebSocket('ws://192.168.1.228:3012');
+// const socket = new ReconnectingWebSocket('ws://192.168.1.228:3012');
+const socket = new ReconnectingWebSocket('ws://127.0.0.1:3012');
+
 socket.binaryType = "arraybuffer";
 
 interface ConfigEditorState {

@@ -6,7 +6,7 @@
     "actuators": [
       {
         "name": "Test1",
-        "interfaceType": "rpi",
+        "interfaceType": "dummy",
         "speedFactor": 1.0,
         "pressureDevice": "/dev/i2c-1",
         "maxPressure": 800,

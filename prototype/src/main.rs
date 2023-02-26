@@ -17,12 +17,12 @@ mod soft_error;
 mod puppet;
 mod util;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 struct ServerConfig {
     port: u16
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ActuatorConfig {
     name: String,
@@ -37,7 +37,7 @@ pub struct ActuatorConfig {
 }
 
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
     server: ServerConfig,
     version: String,

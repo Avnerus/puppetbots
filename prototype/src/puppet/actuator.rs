@@ -22,6 +22,12 @@ pub enum FlowState {
     IDLE
 }
 
+#[derive(PartialEq)]
+pub enum ConfigMessage {
+    MaxPressure,
+    FlowChangePerSec    
+}
+
 pub struct ActuatorFlow {
     pub state: FlowState,
     pub speed: f32
@@ -37,12 +43,31 @@ pub struct ActuatorProps {
 }
 
 pub struct ActuatorMessage {
-    pub set_state: State,
-    pub speed: f32    
+    pub set_state: Option<State>,
+    pub set_config: Option<ConfigMessage>,
+    pub value: f32    
+}
+
+impl ActuatorMessage {
+    pub fn set_state(state:State, speed: f32) -> ActuatorMessage {
+        ActuatorMessage {
+            set_state: Some(state),
+            set_config: None,
+            value: speed
+        }
+    }
+    pub fn set_config(config:ConfigMessage, value: f32) -> ActuatorMessage {
+        ActuatorMessage {
+            set_state: None,
+            set_config: Some(config),
+            value            
+        }
+    }
 }
 
 struct ActuatorAction {
-    pub msg: ActuatorMessage,
+    pub state: State,
+    pub speed: f32,
     pub delay: Duration
 }
 
@@ -103,22 +128,37 @@ impl Actuator {
         loop {
 
             if let Ok(msg) = self.rx.try_recv() {
-                let delay = if self.state == State::IDLE {
-                    Duration::ZERO
-                } else {
-                    match last_message_instant {
-                        Some(instant) => Instant::now().duration_since(instant),
-                        None => Duration::ZERO
+                if let Some(state) = msg.set_state {
+                    let delay = if self.state == State::IDLE {
+                        Duration::ZERO
+                    } else {
+                        match last_message_instant {
+                            Some(instant) => Instant::now().duration_since(instant),
+                            None => Duration::ZERO
+                        }
+                    };       
+            
+                    action_queue.push_back(
+                        Box::new(ActuatorAction {
+                            state,
+                            speed: msg.value,
+                            delay
+                        })
+                    );
+                    last_message_instant = Some(Instant::now());
+                } else if let Some(config) = msg.set_config {
+                    match config {
+                        ConfigMessage::MaxPressure => {
+                            println!("{} setting max pressure to {}", self.name, msg.value);
+                            self.max_pressure = msg.value as i16;
+                        },
+                        ConfigMessage::FlowChangePerSec => {
+                            println!("{} setting flow change per sec to {}", self.name, msg.value);   
+                            self.flow_change_per_sec = msg.value;                         
+                        }
                     }
-                };       
-        
-                action_queue.push_back(
-                    Box::new(ActuatorAction {
-                        msg,
-                        delay
-                    })
-                );
-                last_message_instant = Some(Instant::now());
+                }
+
             }
             // Only process actions after flow changes (Automatically unlocks after the 'if')
             if self.flow_state.lock().unwrap().state == FlowState::IDLE {
@@ -133,12 +173,13 @@ impl Actuator {
                 else if Instant::now() >= action_time {    
                     println!("Performing action!");                     
                     let action = waiting_action.unwrap();
-                    match action.msg.set_state {
+                    let state = action.state;
+                    match state {
                         State::CONTRACTING => {
-                            self.contract_at(action.msg.speed);
+                            self.contract_at(action.speed);
                         },
                         State::EXPANDING => {
-                            self.expand_at(action.msg.speed);
+                            self.expand_at(action.speed);
                         },
                         State::IDLE => {
                             self.stop();

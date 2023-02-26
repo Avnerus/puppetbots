@@ -34,6 +34,9 @@ const ConfigRow = styled.div`
 const ButtonsRow = styled.div`
   display: flex;
   flex-direction: row;
+  button {
+    margin-right: 20px;
+  }
 `
 
 const PressureBox = styled.div`
@@ -48,6 +51,9 @@ function App() {
   const json = useConfigEditorStore((state) => state.json);
   const socket = useConfigEditorStore((state) => state.socket);
   const pressures = useConfigEditorStore((state) => state.pressures);
+
+  const setJson = useConfigEditorStore((state) => state.setJson);
+
 
 
   const loadConfig= () => {
@@ -67,7 +73,21 @@ function App() {
   }
 
   const jsonChanged = (e) => {
+    setJson(e.target.value);
+  }
 
+  const sendConfig= () => {    
+    const buffer = new ArrayBuffer(json.length + 4);
+    let z = new Uint8Array(buffer, 0);
+    const command = 'CSET';
+    for (let i = 0; i < command.length; i++) {
+      z[i] = command.charCodeAt(i);
+    }
+    let bufView = new Uint8Array(buffer, 4);
+    for (let i = 0; i < json.length; i++) {
+        bufView[i] = json.charCodeAt(i);
+    }
+    socket.send(buffer);;
   }
 
   return (
@@ -87,6 +107,7 @@ function App() {
       </ConfigRow>
       <ButtonsRow>
           <button onClick={loadConfig}>Load from device</button>
+          <button onClick={sendConfig}>Send to device</button>
       </ButtonsRow>
       <PressureBox>
         <h2>Pressure values</h2>

@@ -86,31 +86,31 @@ pub fn start(
                     if let Some(actuator_tx) = actuators.get_mut(&motor.to_string()) {
                         match motor_command {
                             'C' => {
-                                let value = msg[null_pos + 2];
-                                println!("Speed: {:?}",value);
+                                let speed = msg[null_pos + 2];
+                                println!("Speed: {:?}",speed);
                                 actuator_tx.send(
-                                    actuator::ActuatorMessage {
-                                        set_state: actuator::State::CONTRACTING,
-                                        speed: value as f32 / 255.0
-                                    }
+                                    actuator::ActuatorMessage::set_state (
+                                        actuator::State::CONTRACTING,
+                                        speed as f32 / 255.0
+                                    )
                                 ).unwrap();                   
                             }
                             'E' => {
-                                let value = msg[null_pos + 2];
+                                let speed = msg[null_pos + 2];
                                 actuator_tx.send(
-                                    actuator::ActuatorMessage {
-                                        set_state: actuator::State::EXPANDING,
-                                        speed: value as f32 / 255.0
-                                    }
+                                    actuator::ActuatorMessage::set_state (
+                                        actuator::State::EXPANDING,
+                                        speed as f32 / 255.0
+                                    )
                                 ).unwrap(); 
                             
                             }
                             'S' => {
                                 actuator_tx.send(
-                                    actuator::ActuatorMessage {
-                                        set_state: actuator::State::IDLE,
-                                        speed: 1.0
-                                    }
+                                    actuator::ActuatorMessage::set_state (
+                                        actuator::State::IDLE,
+                                        1.0
+                                    )
                                 ).unwrap();                         
                             }
                             _ => {
@@ -120,6 +120,25 @@ pub fn start(
                     } else {
                         println!("Unknown actuator {}", motor);
                     }
+                },
+                'C' => {                    
+                    let config_json = str::from_utf8(&msg[4..]).unwrap();   
+                    let new_config:Config = serde_json::from_str(&config_json).unwrap();                    
+                    for actuator in &new_config.actuators {
+                        if let Some(actuator_tx) = actuators.get_mut(&actuator.name) {
+                            actuator_tx.send(
+                                actuator::ActuatorMessage::set_config (
+                                    actuator::ConfigMessage::MaxPressure,
+                                    actuator.max_pressure as f32
+                            )).unwrap();
+                            actuator_tx.send(
+                                actuator::ActuatorMessage::set_config (
+                                    actuator::ConfigMessage::FlowChangePerSec,
+                                    actuator.flow_change_per_sec
+                            )).unwrap();
+                        }
+                    }
+
                 }
                 _ => {
                     println!("Unknown puppet command! {}",command);

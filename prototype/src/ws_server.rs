@@ -101,8 +101,9 @@ fn handle_message(
         }
     }
     else {
-        if let Some(role) = state.tokens.get(&server.ws.token()) {
+        if let Some(_role) = state.tokens.get(&server.ws.token()) {
             match command {
+                /*
                 'S' => {
                     // app state command
                     let app = str::from_utf8(&data[1..4]).unwrap();
@@ -124,7 +125,7 @@ fn handle_message(
                         },
                         _ => return Err(SoftError::new("Unknown command"))
                     }
-                }
+                }*/
                 'A' => {
                     // Actuator command
                     server.server_tx.send(data).unwrap();
@@ -136,7 +137,15 @@ fn handle_message(
                     match action {
                         "GET" => {
                             server.ws.send((String::from("F") + &json!(&server.config).to_string()).as_bytes()).unwrap();
-                        }                        
+                        },
+                        "SET" => {
+                            let config_json = str::from_utf8(&data[4..]).unwrap();   
+                            println!("Config json {}", config_json);                                     
+                            let new_config:Config = serde_json::from_str(&config_json).unwrap();
+                            server.config = Arc::new(new_config);
+                            
+                            server.server_tx.send(data).unwrap();
+                        }                       
                         _ => return Err(SoftError::new("Unknown CONFIG command"))
                     }
                 }
