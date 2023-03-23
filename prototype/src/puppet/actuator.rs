@@ -234,10 +234,10 @@ impl Actuator {
                     }
                     if speed > state.speed {
                         state.state = FlowState::INCREASING;
-                        interface.lock().unwrap().set_flow_angle(CLOCKWISE_MAX_ANGLE);
+                        interface.lock().unwrap().set_flow_angle(ANTI_CLOCKWISE_MAX_ANGLE);
                     } else {
                         state.state = FlowState::DECREASING;
-                        interface.lock().unwrap().set_flow_angle(ANTI_CLOCKWISE_MAX_ANGLE);
+                        interface.lock().unwrap().set_flow_angle(CLOCKWISE_MAX_ANGLE);
                     }   
                 }
                 thread::sleep(Duration::from_millis(flow_change_time as u64));
