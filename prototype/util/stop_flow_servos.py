@@ -5,5 +5,5 @@ kit = ServoKit(channels=16)
 
 angle = 99
 kit.servo[0].angle = angle
-kit.servo[1].angle = angle
+kit.servo[1].angle = 98.5
 

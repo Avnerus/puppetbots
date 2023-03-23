@@ -10,6 +10,7 @@ use std::collections::LinkedList;
 
 const ANTI_CLOCKWISE_MAX_ANGLE:f32 = 0.0;
 const CLOCKWISE_MAX_ANGLE:f32 = 180.0;
+const MINIMUM_FLOW_DIFFERENCE:f32 = 0.05;
 
 #[derive(PartialEq)]
 pub enum State {
@@ -223,7 +224,7 @@ impl Actuator {
                 let mut flow_change_time = 0.0;
                 {
                     let mut state = flow_state.lock().unwrap();
-                    if speed != state.speed {
+                    if (speed - state.speed).abs() >= MINIMUM_FLOW_DIFFERENCE {
                         flow_change_time = (state.speed- speed).abs() / flow_change * 1000.0;
                         println!(
                             "Should wait {:?}ms to go from speed {:?} to {:?}",
@@ -231,14 +232,15 @@ impl Actuator {
                             state.speed,
                             speed
                         );
+
+                        if speed > state.speed {
+                            state.state = FlowState::INCREASING;
+                            interface.lock().unwrap().set_flow_angle(ANTI_CLOCKWISE_MAX_ANGLE);
+                        } else {
+                            state.state = FlowState::DECREASING;
+                            interface.lock().unwrap().set_flow_angle(CLOCKWISE_MAX_ANGLE);
+                        }   
                     }
-                    if speed > state.speed {
-                        state.state = FlowState::INCREASING;
-                        interface.lock().unwrap().set_flow_angle(ANTI_CLOCKWISE_MAX_ANGLE);
-                    } else {
-                        state.state = FlowState::DECREASING;
-                        interface.lock().unwrap().set_flow_angle(CLOCKWISE_MAX_ANGLE);
-                    }   
                 }
                 thread::sleep(Duration::from_millis(flow_change_time as u64));
                 println!("Done waiting");                  

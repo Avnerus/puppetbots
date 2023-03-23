@@ -53,13 +53,13 @@ print("Actuator 2 - Increase flow (S2)")
 skit.servo[1].angle = 0
 sleep(2)
 print("Stop")
-skit.servo[1].angle = 99
+skit.servo[1].angle = 98.5
 sleep(2)
 print("Actuator 2 - Decrease flow (S2)")
 skit.servo[1].angle = 180
 sleep(2)
 print("Stop")
-skit.servo[1].angle = 99
+skit.servo[1].angle = 98.5
 sleep(2)
 
 i2c = busio.I2C(board.SCL, board.SDA)
