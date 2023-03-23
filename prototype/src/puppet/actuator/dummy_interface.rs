@@ -33,11 +33,8 @@ impl ActuatorInterface for DummyInterface {
     fn read_pressure(&mut self) -> i16 {
         self.pressure
     }
-    fn start_flow_increase(&mut self) {
-    }
-    fn start_flow_decrease(&mut self) {
-    }
-    fn maintain_current_flow(&mut self) {
+    fn set_flow_angle(&mut self, angle: f32) {
+        println!("Dummy setting flow angle: {}", angle)
     }
     fn update(&mut self) {
         self.pressure = 

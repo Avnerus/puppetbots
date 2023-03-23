@@ -30,6 +30,7 @@ pub struct ActuatorConfig {
     interface_type: String,
     max_pressure: i16,
     flow_change_per_sec: f32,
+    flow_stop_angle: f32,
     inlet_motor: u16,
     outlet_motor: u16,
     flow_control_servo: u16,

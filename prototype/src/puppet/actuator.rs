@@ -8,6 +8,9 @@ use std::{thread};
 use std::time::{Duration, Instant};
 use std::collections::LinkedList;
 
+const ANTI_CLOCKWISE_MAX_ANGLE:f32 = 0.0;
+const CLOCKWISE_MAX_ANGLE:f32 = 180.0;
+
 #[derive(PartialEq)]
 pub enum State {
     CONTRACTING,
@@ -37,6 +40,7 @@ pub struct ActuatorProps {
     pub name: String,
     pub interface: Box<dyn ActuatorInterface + Send + Sync>,
     pub flow_change_per_sec: f32,
+    pub flow_stop_angle: f32,
     pub max_pressure: i16,
     pub rx: mpsc::Receiver<ActuatorMessage>,
     pub tx: mpsc::Sender<Vec<u8>>
@@ -77,6 +81,7 @@ pub struct Actuator {
     pub state: State,
     pub flow_state: Arc<Mutex<ActuatorFlow>>,
     pub flow_change_per_sec: f32,
+    pub flow_stop_angle: f32,
     pub max_pressure: i16,
     pub interface: Arc<Mutex<Box<dyn ActuatorInterface + Send + Sync>>>,
     rx: mpsc::Receiver<ActuatorMessage>,
@@ -88,9 +93,7 @@ pub trait ActuatorInterface {
     fn set_outlet_valve(&mut self, throttle:f32);
     fn read_pressure(&mut self) -> i16;
     fn update(&mut self);
-    fn start_flow_increase(&mut self);
-    fn start_flow_decrease(&mut self);
-    fn maintain_current_flow(&mut self);            
+    fn set_flow_angle(&mut self, angle: f32);        
 }
 
 impl Actuator {
@@ -108,6 +111,7 @@ impl Actuator {
             tx: props.tx,
             pressure: 0,
             max_pressure: props.max_pressure,
+            flow_stop_angle: props.flow_stop_angle,
             flow_change_per_sec: props.flow_change_per_sec,
             state: State::IDLE,
         }
@@ -213,6 +217,7 @@ impl Actuator {
             let flow_state  = Arc::clone(&self.flow_state);
             let interface = Arc::clone(&self.interface);
             let flow_change = self.flow_change_per_sec;
+            let stop_angle = self.flow_stop_angle;
 
             thread::spawn(move || {
                 let mut flow_change_time = 0.0;
@@ -229,17 +234,17 @@ impl Actuator {
                     }
                     if speed > state.speed {
                         state.state = FlowState::INCREASING;
-                        interface.lock().unwrap().start_flow_increase();                    
+                        interface.lock().unwrap().set_flow_angle(CLOCKWISE_MAX_ANGLE);
                     } else {
                         state.state = FlowState::DECREASING;
-                        interface.lock().unwrap().start_flow_decrease();                    
+                        interface.lock().unwrap().set_flow_angle(ANTI_CLOCKWISE_MAX_ANGLE);
                     }   
                 }
                 thread::sleep(Duration::from_millis(flow_change_time as u64));
                 println!("Done waiting");                  
 
                 let mut int = interface.lock().unwrap();
-                int.maintain_current_flow();
+                int.set_flow_angle(stop_angle);
                 int.set_inlet_valve(1.0);
                 int.set_outlet_valve(0.0);
 

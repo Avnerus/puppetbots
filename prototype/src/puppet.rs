@@ -56,6 +56,7 @@ pub fn start(
                         name: actuator.name.clone(),
                         max_pressure: actuator.max_pressure,
                         flow_change_per_sec: actuator.flow_change_per_sec,
+                        flow_stop_angle: actuator.flow_stop_angle,
                         interface: result as Box<dyn ActuatorInterface + Send + Sync>,
                         rx: actuator_rx,
                         tx: puppet_tx.clone()

@@ -111,15 +111,9 @@ impl ActuatorInterface for RPIInterface {
     fn read_pressure(&mut self) -> i16 {
         block!(self.adc.read(&mut channel::DifferentialA0A1)).unwrap()
     }
-    fn start_flow_increase(&mut self) {
-        self.servo_kit.set_angle(0, self.flow_control_channel);
-    }
-    fn start_flow_decrease(&mut self) {
-        self.servo_kit.set_angle(180, self.flow_control_channel);
-    }
-    fn maintain_current_flow(&mut self) {
-        self.servo_kit.set_angle(101, self.flow_control_channel);
-    }
+    fn set_flow_angle(&mut self, angle: f32) {
+        self.servo_kit.set_angle(angle, self.flow_control_channel);
+    }    
     fn update(&mut self) {
     }
 }

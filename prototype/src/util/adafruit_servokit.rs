@@ -56,9 +56,9 @@ impl AdafruitServoKit {
            pwm
         }
     }
-    pub fn set_angle(&mut self, angle: u8, channel:Channel) {
+    pub fn set_angle(&mut self, angle: f32, channel:Channel) {
         // Assuming servo angle range of 0-180
-        let duty_cycle = self.min_duty + ((angle as f32 / 180.0) * self.duty_range as f32) as u16;
+        let duty_cycle = self.min_duty + ((angle / 180.0) * self.duty_range as f32) as u16;
         self.pwm.set_channel_on(channel, 0).unwrap();
         self.pwm.set_channel_off(channel, duty_cycle).unwrap();
     }
