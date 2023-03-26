@@ -2,7 +2,7 @@ import socket
 import lz4.frame as lz4f
 import json
 
-localIP     = "127.0.0.1"
+localIP     = "0.0.0.0"
 localPort   = 14043
 bufferSize  = 32768
 
@@ -14,12 +14,15 @@ print("UDP server up and listening")
 
 message = None
 
-while(True):
+breakFlag = False
+
+while(not breakFlag):
 
     bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
     message = bytesAddressPair[0]    
     binData = lz4f.decompress(message, return_bytearray=True, return_bytes_read=False) 
     utfData = binData.decode('utf-8') 
     data = json.loads(utfData) 
-    print(data["scene"]["actors"][0]["body"]['leftIndexTip']['rotation'])
+    print(data)
+    breakFlag = True
    
