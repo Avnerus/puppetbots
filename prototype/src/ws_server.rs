@@ -55,11 +55,11 @@ fn handle_message(
     server: &mut Server,
     msg: Message
 ) -> Result<(), SoftError> {
-    println!("Server got message '{}'. ", msg);
+   // println!("Server got message '{}'. ", msg);
     let data = msg.into_data();
     let state = &mut *server.state.lock().unwrap();
     let command = data[0] as char;
-    println!("Command code: {}.", command);
+    //println!("Command code: {}.", command);
 
     // Only command possible without a role is R-Register
     if command == 'R' {

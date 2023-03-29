@@ -27,6 +27,7 @@ impl Orientation {
     }   
     pub fn set_orientation_angle(&mut self, angle: u8) {
         if (angle as f32 - self.current_angle as f32).abs() >= MINIMUM_ANGLE_DIFFERENCE {
+            println!("Orientation: Set angle to {}", angle);
             self.interface.set_angle(angle.into());
             self.current_angle = angle;
         }
