@@ -1,0 +1,32 @@
+{
+    "version": "1.0",
+    "server": {
+        "port": 3012
+    },
+    "actuators": [
+      {
+        "name": "RArm",
+        "interfaceType": "rpi",
+        "speedFactor": 1.0,
+        "pressureDevice": "/dev/i2c-1",
+        "flowStopAngle": 101,
+        "maxPressure": 1200,
+        "flowChangePerSec": 0.4, 
+        "inletMotor": 1,
+        "outletMotor": 2,
+        "flowControlServo": 1
+      },
+      {
+        "name": "LArm",
+        "interfaceType": "rpi",
+        "speedFactor": 1.0,
+        "pressureDevice": "/dev/i2c-1",
+        "flowStopAngle": 100.5,
+        "maxPressure": 900,
+        "flowChangePerSec": 0.4, 
+        "inletMotor": 3,
+        "outletMotor": 4,
+        "flowControlServo": 2
+      }
+    ]
+}
