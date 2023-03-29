@@ -7,6 +7,7 @@ extern crate ws;
 extern crate serde_derive;
 
 use std::thread;
+use std::env;
 use std::fs::File;
 use std::path::Path;
 use std::sync::{Arc};
@@ -45,8 +46,8 @@ pub struct Config {
     actuators: Vec<ActuatorConfig>
 }
 
-fn read_config() -> Result<Config, Box<dyn std::error::Error>> {
-    let path = Path::new("./config.json");
+fn read_config(config_file:String) -> Result<Config, Box<dyn std::error::Error>> {
+    let path = Path::new(&config_file);
     let file = File::open(path)?;
     let data = serde_json::from_reader(file)?;
 
@@ -55,8 +56,15 @@ fn read_config() -> Result<Config, Box<dyn std::error::Error>> {
 
 fn main() {
     println!("Hello, Rusty WS server!");
-
-    let config = Arc::new(read_config().unwrap());
+    
+    let args: Vec<String> = env::args().collect();
+    let config_file = match args.len() {
+        1 => "config.json",
+        2 => &args[1],
+        _ => panic!("Invalid number of command line arguments. Usage: {} [config file name]",  &args[0])
+    };
+    
+    let config = Arc::new(read_config(config_file.into()).unwrap());
 
     // Puppet thread
     let (puppet_tx, puppet_rx): (mpsc::Sender<Vec<u8>>, mpsc::Receiver<Vec<u8>>) = mpsc::channel();
