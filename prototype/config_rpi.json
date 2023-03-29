@@ -28,5 +28,9 @@
         "outletMotor": 4,
         "flowControlServo": 2
       }
-    ]
+    ],
+    "orientation": {
+      "interfaceType": "rpi",
+      "orientationServo": 3
+    }
 }

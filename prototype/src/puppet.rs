@@ -84,7 +84,7 @@ pub fn start(
         "rpi" => {
             orientation::rpi_interface::OrientationRPIInterface::new(
                 orientation::rpi_interface::OrientationRPIInterfaceProps {
-                    orientation_servo: &config.orientation.orientation_servo
+                    orientation_servo: config.orientation.orientation_servo
                 }
             )
         },

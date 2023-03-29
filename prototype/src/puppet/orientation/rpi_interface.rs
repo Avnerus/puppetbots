@@ -1,7 +1,7 @@
 use std::error::Error;
 use crate::puppet::orientation::{OrientationInterface};
 use crate::util::adafruit_servokit::{AdafruitServoKit};
-use pwm_pca9685::{Pca9685, Channel};
+use pwm_pca9685::{Channel};
 
 pub struct OrientationRPIInterfaceProps {
     pub orientation_servo: u16
@@ -29,10 +29,10 @@ impl OrientationRPIInterface {
         let servo_kit = AdafruitServoKit::new();
         let orientation_channel = int_to_channel(props.orientation_servo).ok_or("Invalid orientation servo index")?;
         
-        Box::new(OrientationRPIInterface {         -
+        Ok(Box::new(OrientationRPIInterface {
             servo_kit,
             orientation_channel
-        })
+        }))
     } 
 }
 impl OrientationInterface for OrientationRPIInterface {   
