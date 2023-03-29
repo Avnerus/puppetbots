@@ -38,12 +38,19 @@ pub struct ActuatorConfig {
     speed_factor: f32
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct OrientationConfig {
+    interface_type: String,
+    orientation_servo: u16        
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
     server: ServerConfig,
     version: String,
-    actuators: Vec<ActuatorConfig>
+    actuators: Vec<ActuatorConfig>,
+    orientation: OrientationConfig
 }
 
 fn read_config(config_file:String) -> Result<Config, Box<dyn std::error::Error>> {

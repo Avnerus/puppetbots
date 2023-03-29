@@ -10,6 +10,11 @@ mod actuator;
 use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
 use self::actuator::dummy_interface::{DummyInterface, DummyInterfaceProps};
 
+mod orientation;
+use self::orientation::{Orientation, OrientationProps, OrientationInterface};
+use self::orientation::dummy_interface::{OrientationDummyInterface};
+
+
 use crate::soft_error::{SoftError};
 
 use crate::Config;
@@ -71,8 +76,29 @@ pub fn start(
                 println!("Error initializing actuator interface: {:?} - {:?}", actuator.name, e);
             }
         };
-
     }
+
+    let orientation_interface: Result<Box<dyn OrientationInterface + Send + Sync>, Box<dyn Error>> =
+    match config.orientation.interface_type.as_str() {
+        #[cfg(not(target_os = "windows"))]
+        "rpi" => {
+            orientation::rpi_interface::OrientationRPIInterface::new(
+                orientation::rpi_interface::OrientationRPIInterfaceProps {
+                    orientation_servo: &config.orientation_servo
+                }
+            )
+        },
+        "dummy" => {
+            OrientationDummyInterface::new()
+        },
+        _ => Err(SoftError::new(format!("Invalid orientation interface type: {:?}",&config.orientation.interface_type).as_str()).into())
+    };
+
+    let mut orientation = Orientation::new(
+        OrientationProps { 
+            interface: orientation_interface.unwrap() as Box<dyn OrientationInterface + Send + Sync>
+        }
+    );
 
     loop {
         if let Ok(msg) = server_rx.try_recv() {
@@ -82,7 +108,7 @@ pub fn start(
                     let null_pos = msg.iter().position(|&x| x == 0).unwrap();
                     let motor = str::from_utf8(&msg[1..null_pos]).unwrap();
                     let motor_command = msg[null_pos + 1] as char;                   
-                    println!("Puppet motor command {}: {}", motor, motor_command);
+                    println!("Puppet actuator command {}: {}", motor, motor_command);
 
                     if let Some(actuator_tx) = actuators.get_mut(&motor.to_string()) {
                         match motor_command {
@@ -140,6 +166,10 @@ pub fn start(
                         }
                     }
 
+                },
+                'O' => {
+                    let angle = msg[1];
+                    orientation.set_orientation_angle(angle.into());
                 }
                 _ => {
                     println!("Unknown puppet command! {}",command);

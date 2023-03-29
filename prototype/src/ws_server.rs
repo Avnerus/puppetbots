@@ -129,6 +129,10 @@ fn handle_message(
                 'A' => {
                     // Actuator command
                     server.server_tx.send(data).unwrap();
+                },
+                'O' => {
+                    // Orientation command
+                    server.server_tx.send(data).unwrap();
                 }
                 'C' => {
                     // config command
@@ -140,7 +144,6 @@ fn handle_message(
                         },
                         "SET" => {
                             let config_json = str::from_utf8(&data[4..]).unwrap();   
-                            println!("Config json {}", config_json);                                     
                             let new_config:Config = serde_json::from_str(&config_json).unwrap();
                             server.config = Arc::new(new_config);
                             

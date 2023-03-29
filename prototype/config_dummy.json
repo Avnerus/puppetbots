@@ -3,6 +3,10 @@
     "server": {
         "port": 3012
     },
+    "orientation": {    
+      "interfaceType": "dummy",
+      "orientationServo": 3
+    },    
     "actuators": [
       {
         "name": "Test1",
