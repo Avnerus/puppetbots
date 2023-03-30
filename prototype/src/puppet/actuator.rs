@@ -296,7 +296,7 @@ impl Actuator {
     ) {
         println!("Resetting flow");
           
-        self.state = State::CONTRACTING;            
+        self.state = State::IDLE;            
 
         let flow_state  = Arc::clone(&self.flow_state);
         let interface = Arc::clone(&self.interface);
