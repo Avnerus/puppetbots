@@ -5,7 +5,7 @@
     },
     "actuators": [
       {
-        "name": "RArm",
+        "name": "LArm",
         "interfaceType": "rpi",
         "speedFactor": 1.0,
         "pressureDevice": "/dev/i2c-1",
@@ -17,7 +17,7 @@
         "flowControlServo": 1
       },
       {
-        "name": "LArm",
+        "name": "RArm",
         "interfaceType": "rpi",
         "speedFactor": 1.0,
         "pressureDevice": "/dev/i2c-1",

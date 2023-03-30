@@ -112,6 +112,7 @@ impl ActuatorInterface for RPIInterface {
         block!(self.adc.read(&mut channel::DifferentialA0A1)).unwrap()
     }
     fn set_flow_angle(&mut self, angle: f32) {
+        println!("Setting flow angle {}", angle);
         self.servo_kit.set_angle(angle, self.flow_control_channel);
     }    
     fn update(&mut self) {
