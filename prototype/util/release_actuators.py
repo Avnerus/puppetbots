@@ -6,7 +6,6 @@ from adafruit_motorkit import MotorKit
 from time import sleep
 from adafruit_servokit import ServoKit
 
-skit = ServoKit(channels=16)
 mkit = MotorKit()
 
 i2c = busio.I2C(board.SCL, board.SDA)
