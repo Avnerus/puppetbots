@@ -135,7 +135,7 @@ impl Actuator {
 
             if let Ok(msg) = self.rx.try_recv() {
                 if let Some(state) = msg.set_state {
-                    let delay = if self.state == State::IDLE {
+                    let delay = if self.state == State::IDLE || self.state == State::ResetFlow {
                         Duration::ZERO
                     } else {
                         match last_message_instant {
@@ -211,7 +211,7 @@ impl Actuator {
     }
     fn contract_at(
         &mut self,
-        speed: f32
+        mut speed: f32
     ) {
         println!("Contracting at {}", speed);
         if speed == 0.0 {
@@ -244,6 +244,8 @@ impl Actuator {
                             state.state = FlowState::DECREASING;
                             interface.lock().unwrap().set_flow_angle(CLOCKWISE_MAX_ANGLE);
                         }   
+                    } else {
+                        speed = state.speed
                     }
                 }
                 thread::sleep(Duration::from_millis(flow_change_time as u64));
