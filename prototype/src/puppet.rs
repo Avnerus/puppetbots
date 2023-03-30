@@ -139,6 +139,14 @@ pub fn start(
                                         1.0
                                     )
                                 ).unwrap();                         
+                            },
+                            'R' => {
+                                actuator_tx.send(
+                                    actuator::ActuatorMessage::set_state (
+                                        actuator::State::ResetFlow,
+                                        1.0
+                                    )
+                                ).unwrap();                         
                             }
                             _ => {
                                 println!("Unknown actuator motor command! {}", motor_command);

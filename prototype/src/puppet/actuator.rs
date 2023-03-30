@@ -16,6 +16,7 @@ const MINIMUM_FLOW_DIFFERENCE:f32 = 0.05;
 pub enum State {
     CONTRACTING,
     EXPANDING,
+    ResetFlow,
     IDLE
 }
 
@@ -188,7 +189,10 @@ impl Actuator {
                         },
                         State::IDLE => {
                             self.stop();
-                        }                    
+                        },
+                        State::ResetFlow => {
+                            self.reset_flow();
+                        },                   
                     }
                     waiting_action = None;
                 }    
@@ -284,5 +288,43 @@ impl Actuator {
     }
     fn read_pressure(&mut self) -> i16 {
         self.interface.lock().unwrap().read_pressure()
+    }
+    fn reset_flow(
+        &mut self        
+    ) {
+        println!("Resetting flow");
+          
+        self.state = State::CONTRACTING;            
+
+        let flow_state  = Arc::clone(&self.flow_state);
+        let interface = Arc::clone(&self.interface);
+        let flow_change = self.flow_change_per_sec;
+        let stop_angle = self.flow_stop_angle;
+
+        // TODO: Redundant
+        thread::spawn(move || {
+             
+            let flow_change_time = flow_state.lock().unwrap().speed / flow_change * 1000.0;
+            println!(
+                "Should wait {:?}ms to go from speed {:?} to 0",
+                flow_change_time,
+                flow_state.lock().unwrap().speed   
+            );
+            flow_state.lock().unwrap().state = FlowState::DECREASING;
+            interface.lock().unwrap().set_flow_angle(CLOCKWISE_MAX_ANGLE);         
+            
+            thread::sleep(Duration::from_millis(flow_change_time as u64));
+            println!("Done waiting");                  
+
+            let mut int = interface.lock().unwrap();
+            int.set_flow_angle(stop_angle);
+            int.set_inlet_valve(1.0);
+            int.set_outlet_valve(0.0);
+
+            flow_state.lock().unwrap().state = FlowState::IDLE;
+            flow_state.lock().unwrap().speed = 0.0;
+
+            println!("Unlocked flow signal");
+        });        
     }
 }

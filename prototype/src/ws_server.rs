@@ -40,7 +40,7 @@ struct Server {
    config: Arc<Config>
 }
 
-
+/*
 fn send_pup_state(state: &ServerState, sender: &Sender) {
     println!("Sending puppet state");
     let json_command = json!({
@@ -49,7 +49,7 @@ fn send_pup_state(state: &ServerState, sender: &Sender) {
     });
 
     sender.broadcast((String::from("U") + &json_command.to_string()).as_bytes()).unwrap();
-}
+}*/
 
 fn handle_message(
     server: &mut Server,
@@ -75,26 +75,10 @@ fn handle_message(
                          state.puppeteers.insert(
                              role,
                              server.ws.clone()
-                         );
-                         if role != ADMIN_ROLE {
-                            state.pup_state.insert (
-                                role,
-                                Puppet {
-                                   connected: true,
-                                   position: match role {
-                                       1 => vec![105,103],
-                                       2 => vec![180,103],
-                                       _ => vec![0,0]
-                                   },
-                                   name: str::from_utf8(&data[2..]).unwrap().to_string(),
-                                   action: false
-                                }
-                            );
-                         }
+                         );                        
                          println!("Registration successful");
                     }
                 }
-                send_pup_state(state, &server.ws);
             }
 
             _ => return Err(SoftError::new("Unknown role"))
@@ -102,30 +86,7 @@ fn handle_message(
     }
     else {
         if let Some(_role) = state.tokens.get(&server.ws.token()) {
-            match command {
-                /*
-                'S' => {
-                    // app state command
-                    let app = str::from_utf8(&data[1..4]).unwrap();
-                    println!("state command {:?}", app);
-                    match app {
-                        "POS" => {
-                            let pos_state_x:u8 = data[4];
-                            let pos_state_y:u8 = data[5];
-                            println!("POS State! {:?}", [pos_state_x,pos_state_y]);
-                            (*state.pup_state.get_mut(&role).unwrap()).position[0] = pos_state_x;
-                            (*state.pup_state.get_mut(&role).unwrap()).position[1] = pos_state_y;
-                            send_pup_state(state, &server.ws);
-                        },
-                        "ACT" => {
-                            let act:bool = data[4] == 1;
-                            println!("ACT State! {:?}", act);
-                            (*state.pup_state.get_mut(&role).unwrap()).action = act;
-                            send_pup_state(state, &server.ws);
-                        },
-                        _ => return Err(SoftError::new("Unknown command"))
-                    }
-                }*/
+            match command {               
                 'A' => {
                     // Actuator command
                     server.server_tx.send(data).unwrap();
@@ -167,9 +128,7 @@ impl Handler for Server {
     fn on_open(&mut self, _: Handshake) -> ws::Result<()> {
         println!("Client connected!");
         let token = self.ws.token();
-        println!("Client token: {:?}", token);
-        let state = &*self.state.lock().unwrap();
-        send_pup_state(state, &self.ws);
+        println!("Client token: {:?}", token);        
         Ok(())
     }
     fn on_message(&mut self, msg: Message) -> ws::Result<()> {
@@ -197,8 +156,6 @@ impl Handler for Server {
             state.puppeteers.remove(role);
             state.pup_state.remove(role);
         }
-
-        send_pup_state(state, &self.ws);
         state.tokens.remove(&self.ws.token()); 
     }
 }
