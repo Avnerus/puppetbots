@@ -130,6 +130,7 @@ impl Actuator {
         let mut action_time = Instant::now();
 
         self.stop();
+        self.interface.lock().unwrap().set_flow_angle(self.flow_stop_angle);
        
         loop {
 

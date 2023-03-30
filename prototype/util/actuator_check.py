@@ -7,6 +7,9 @@ from time import sleep
 from adafruit_servokit import ServoKit
 
 skit = ServoKit(channels=16)
+skit.servo[0].angle = 99
+skit.servo[1].angle = 98.5
+
 mkit = MotorKit()
 
 i2c = busio.I2C(board.SCL, board.SDA)
