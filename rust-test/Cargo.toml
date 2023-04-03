@@ -1,0 +1,16 @@
+[package]
+name = "rust-test"
+version = "0.1.0"
+authors = ["Avner Peled <avner.peled@aalto.fi>"]
+
+[[bin]]
+name = "rust_test"
+path = "src/main.rs"
+
+[dependencies]
+nb = { version = "*"}
+ads1x1x = { version = "*"}
+embedded-hal = { version = "*"}
+linux-embedded-hal = { version = "*"}
+adafruit_motorkit = { version = "*"}
+pwm-pca9685 = { version = "0.2.0" }
