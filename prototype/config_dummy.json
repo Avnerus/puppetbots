@@ -9,7 +9,7 @@
     },    
     "actuators": [
       {
-        "name": "Test1",
+        "name": "LArm",
         "interfaceType": "dummy",
         "speedFactor": 1.0,
         "pressureDevice": "/dev/i2c-1",

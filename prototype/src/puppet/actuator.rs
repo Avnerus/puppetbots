@@ -14,17 +14,12 @@ const MINIMUM_FLOW_DIFFERENCE:f32 = 0.05;
 
 #[derive(PartialEq)]
 pub enum State {
-    CONTRACTING,
-    EXPANDING,
-    ResetFlow,
-    IDLE
-}
-
-#[derive(PartialEq)]
-pub enum FlowState {
-    INCREASING,
-    DECREASING,
-    IDLE
+    Contracting,
+    Expanding,
+    FlowIncreasing,
+    FlowDecreasing,
+    FlowReset,
+    Idle
 }
 
 #[derive(PartialEq)]
@@ -50,23 +45,16 @@ pub struct ActuatorProps {
 
 pub struct ActuatorMessage {
     pub set_state: Option<State>,
-    pub set_config: Option<ConfigMessage>,
-    pub value: f32    
+    pub speed: f32,
+    pub delay: u16
 }
 
 impl ActuatorMessage {
-    pub fn set_state(state:State, speed: f32) -> ActuatorMessage {
+    pub fn set_state(state:State, speed: f32, delay: u16) -> ActuatorMessage {
         ActuatorMessage {
             set_state: Some(state),
-            set_config: None,
-            value: speed
-        }
-    }
-    pub fn set_config(config:ConfigMessage, value: f32) -> ActuatorMessage {
-        ActuatorMessage {
-            set_state: None,
-            set_config: Some(config),
-            value            
+            speed,
+            delay
         }
     }
 }
@@ -74,14 +62,13 @@ impl ActuatorMessage {
 struct ActuatorAction {
     pub state: State,
     pub speed: f32,
-    pub delay: Duration
+    pub delay: u16
 }
 
 pub struct Actuator {
     pub name: String,
     pub pressure: i16,
-    pub state: State,
-    pub flow_state: Arc<Mutex<ActuatorFlow>>,
+    pub state: Arc<Mutex<State>>,
     pub flow_change_per_sec: f32,
     pub flow_stop_angle: f32,
     pub max_pressure: i16,
@@ -115,7 +102,7 @@ impl Actuator {
             max_pressure: props.max_pressure,
             flow_stop_angle: props.flow_stop_angle,
             flow_change_per_sec: props.flow_change_per_sec,
-            state: State::IDLE,
+            state: Arc::new(Mutex::new(State::IDLE))
         }
     } 
     pub fn start(&mut self) {  
@@ -123,11 +110,7 @@ impl Actuator {
 
         let mut action_queue:LinkedList<Box<ActuatorAction>> = LinkedList::new();
 
-        let mut last_admin_update = Instant::now();
-        let mut last_message_instant:Option<Instant> = None;
-        
-        let mut waiting_action:Option<Box<ActuatorAction>> = None;
-        let mut action_time = Instant::now();
+        let mut last_admin_update = Instant::now();  
 
         self.stop();
         self.interface.lock().unwrap().set_flow_angle(self.flow_stop_angle);
@@ -135,25 +118,15 @@ impl Actuator {
         loop {
 
             if let Ok(msg) = self.rx.try_recv() {
-                if let Some(state) = msg.set_state {
-                    let delay = if self.state == State::IDLE || self.state == State::ResetFlow {
-                        Duration::ZERO
-                    } else {
-                        match last_message_instant {
-                            Some(instant) => Instant::now().duration_since(instant),
-                            None => Duration::ZERO
-                        }
-                    };       
-            
+                if let Some(state) = msg.set_state {          
                     action_queue.push_back(
                         Box::new(ActuatorAction {
                             state,
-                            speed: msg.value,
-                            delay
+                            speed: msg.speed,
+                            delay: msg.delay
                         })
-                    );
-                    last_message_instant = Some(Instant::now());
-                } else if let Some(config) = msg.set_config {
+                    );                    
+                } /* else if let Some(config) = msg.set_config {
                     match config {
                         ConfigMessage::MaxPressure => {
                             println!("{} setting max pressure to {}", self.name, msg.value);
@@ -164,22 +137,15 @@ impl Actuator {
                             self.flow_change_per_sec = msg.value;                         
                         }
                     }
-                }
+                }*/
 
             }
             // Only process actions after flow changes (Automatically unlocks after the 'if')
-            if self.flow_state.lock().unwrap().state == FlowState::IDLE {
-                if Option::is_none(&waiting_action) {
-                    if let Some(action) = action_queue.pop_front() {
-                        let delay = action.delay;
-                        waiting_action = Some(action);
-                        println!("Delaying action for {:?}", delay);
-                        action_time = Instant::now() + delay;
-                    }       
-                }
-                else if Instant::now() >= action_time {    
-                    println!("Performing action!");                     
-                    let action = waiting_action.unwrap();
+            if self.flow_state.lock().unwrap().state == FlowState::IDLE &&
+               *self.state.lock().unwrap() == State::IDLE             {
+              
+                if let Some(action) = action_queue.pop_front() {
+                    println!("Performing action!");                                       
                     let state = action.state;
                     match state {
                         State::CONTRACTING => {
@@ -195,8 +161,21 @@ impl Actuator {
                             self.reset_flow();
                         },                   
                     }
-                    waiting_action = None;
-                }    
+                    if action.delay > 0 {
+                        let state = Arc::clone(&self.state);
+                        let delay = action.delay;
+
+                        thread::spawn(move || {                           
+                            println!("Waiting {}ms", delay);          
+                            thread::sleep(Duration::from_millis(delay.into()));                            
+                            println!("Done waiting");                          
+                            *state.lock().unwrap() = State::IDLE;                            
+                        });                         
+                    } else {
+
+                        *self.state.lock().unwrap() = State::IDLE;                            
+                    }
+                }                    
             }
             self.update();
             if last_admin_update.elapsed().as_secs() >= 1 {
@@ -218,7 +197,7 @@ impl Actuator {
         if speed == 0.0 {
             self.stop();
         } else {           
-            self.state = State::CONTRACTING;            
+            *self.state.lock().unwrap() = State::CONTRACTING;            
 
             let flow_state  = Arc::clone(&self.flow_state);
             let interface = Arc::clone(&self.interface);
@@ -270,7 +249,7 @@ impl Actuator {
             self.stop();
         } else {
             let mut int = self.interface.lock().unwrap();
-            self.state = State::EXPANDING;
+            *self.state.lock().unwrap() = State::EXPANDING;
             int.set_inlet_valve(0.0);
             int.set_outlet_valve(speed);
         }  
@@ -280,11 +259,11 @@ impl Actuator {
         let mut int = self.interface.lock().unwrap();
         int.set_inlet_valve(0.0);
         int.set_outlet_valve(0.0);
-        self.state = State::IDLE;
+        *self.state.lock().unwrap() = State::IDLE;
     }
     fn update(&mut self) {
         self.pressure = self.read_pressure();
-        if self.pressure > self.max_pressure && self.state == State::CONTRACTING {
+        if self.pressure > self.max_pressure && *self.state.lock().unwrap() == State::CONTRACTING {
             println!("Pressure surpassed MAX: {}", self.pressure);
             self.stop();
         } 
@@ -297,7 +276,7 @@ impl Actuator {
     ) {
         println!("Resetting flow");
           
-        self.state = State::IDLE;            
+        *self.state.lock().unwrap() = State::IDLE;            
 
         let flow_state  = Arc::clone(&self.flow_state);
         let interface = Arc::clone(&self.interface);

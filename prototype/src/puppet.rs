@@ -114,20 +114,29 @@ pub fn start(
                         match motor_command {
                             'C' => {
                                 let speed = msg[null_pos + 2];
-                                println!("Speed: {:?}",speed);
+                                let delay:u16 = u16::from_le_bytes([msg[null_pos + 3], msg[null_pos + 4]]);
+
+                                println!("Speed: {:?}", speed);
+                                println!("Delay: {:?}", delay);
+
+
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
                                         actuator::State::CONTRACTING,
-                                        speed as f32 / 255.0
+                                        speed as f32 / 255.0,
+                                        delay
                                     )
                                 ).unwrap();                   
                             }
                             'E' => {
                                 let speed = msg[null_pos + 2];
+                                let delay:u16 = u16::from_le_bytes([msg[null_pos + 3], msg[null_pos + 4]]);
+
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
                                         actuator::State::EXPANDING,
-                                        speed as f32 / 255.0
+                                        speed as f32 / 255.0,
+                                        delay
                                     )
                                 ).unwrap(); 
                             
@@ -136,7 +145,8 @@ pub fn start(
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
                                         actuator::State::IDLE,
-                                        1.0
+                                        1.0,
+                                        0
                                     )
                                 ).unwrap();                         
                             },
@@ -144,7 +154,8 @@ pub fn start(
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
                                         actuator::State::ResetFlow,
-                                        1.0
+                                        1.0,
+                                        0
                                     )
                                 ).unwrap();                         
                             }
@@ -156,9 +167,10 @@ pub fn start(
                         println!("Unknown actuator {}", motor);
                     }
                 },
-                'C' => {                    
+                'C' => {                    /*
                     let config_json = str::from_utf8(&msg[4..]).unwrap();   
-                    let new_config:Config = serde_json::from_str(&config_json).unwrap();                    
+                    let new_config:Config = serde_json::from_str(&config_json).unwrap();      
+                                  
                     for actuator in &new_config.actuators {
                         if let Some(actuator_tx) = actuators.get_mut(&actuator.name) {
                             actuator_tx.send(
@@ -172,8 +184,7 @@ pub fn start(
                                     actuator.flow_change_per_sec
                             )).unwrap();
                         }
-                    }
-
+                    }*/
                 },
                 'O' => {
                     let angle = msg[1];
