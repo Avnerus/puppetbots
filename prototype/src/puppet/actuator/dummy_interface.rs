@@ -25,10 +25,10 @@ impl DummyInterface {
 }
 impl ActuatorInterface for DummyInterface {
     fn set_inlet_valve(&mut self, speed: f32) {
-        self.contract_speed = speed * self.speed_factor;
+        println!("Dummy setting inlet valve: {}", speed)
     }
     fn set_outlet_valve(&mut self, speed: f32) {
-        self.expand_speed = speed * self.speed_factor;
+        println!("Dummy setting outlet valve: {}", speed)
     }
     fn read_pressure(&mut self) -> i16 {
         self.pressure

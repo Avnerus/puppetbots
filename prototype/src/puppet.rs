@@ -122,7 +122,7 @@ pub fn start(
 
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
-                                        actuator::State::CONTRACTING,
+                                        actuator::State::Contracting,
                                         speed as f32 / 255.0,
                                         delay
                                     )
@@ -134,7 +134,7 @@ pub fn start(
 
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
-                                        actuator::State::EXPANDING,
+                                        actuator::State::Expanding,
                                         speed as f32 / 255.0,
                                         delay
                                     )
@@ -144,7 +144,7 @@ pub fn start(
                             'S' => {
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
-                                        actuator::State::IDLE,
+                                        actuator::State::Idle,
                                         1.0,
                                         0
                                     )
@@ -153,7 +153,7 @@ pub fn start(
                             'R' => {
                                 actuator_tx.send(
                                     actuator::ActuatorMessage::set_state (
-                                        actuator::State::ResetFlow,
+                                        actuator::State::FlowReset,
                                         1.0,
                                         0
                                     )
