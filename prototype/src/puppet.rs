@@ -1,19 +1,19 @@
 use std::{thread};
 use std::time::{Duration};
 use std::sync::mpsc;
-use std::sync::{Arc};
+use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use std::str;
 use std::error::Error;
 
 mod actuator;
-use self::actuator::{Actuator, ActuatorProps, ActuatorInterface};
-use self::actuator::dummy_interface::{DummyInterface, DummyInterfaceProps};
+mod hardware;
+
+use self::actuator::{Actuator, ActuatorProps};
+use self::hardware::dummy_interface::{DummyInterface, DummyInterfaceProps};
 
 mod orientation;
-use self::orientation::{Orientation, OrientationProps, OrientationInterface};
-use self::orientation::dummy_interface::{OrientationDummyInterface};
-
+use self::orientation::{Orientation, OrientationProps};
 
 use crate::soft_error::{SoftError};
 
@@ -25,78 +25,61 @@ pub fn start(
     server_rx: mpsc::Receiver<Vec<u8>>
 ) {
 
-    let mut actuators: HashMap<String, mpsc::Sender<actuator::ActuatorMessage>> = HashMap::new();
-    for actuator in &config.actuators {
-        println!("Creating actutor {:?}", actuator.name);
+    println!("Creating interface type {:?}", config.interface_type);
 
-        let interface: Result<Box<dyn ActuatorInterface + Send + Sync>, Box<dyn Error>> = match actuator.interface_type.as_str() {
-            #[cfg(not(target_os = "windows"))]
-            "rpi" => {
-                actuator::rpi_interface::RPIInterface::new(
-                        actuator::rpi_interface::RPIInterfaceProps {
-                        pressure_i2c_dev: actuator.pressure_device.clone(),
-                        inlet_motor: actuator.inlet_motor,
-                        outlet_motor: actuator.outlet_motor,
-                        flow_control_servo: actuator.flow_control_servo
-                    }
-                )
-            },
-            "dummy" => {
-                DummyInterface::new(
-                    DummyInterfaceProps { 
-                        speed_factor: actuator.speed_factor
-                    }
-                )
-            },
-            _ => Err(SoftError::new(format!("Invalid actuator interface type: {:?}",actuator.interface_type).as_str()).into())
-        };
-
-        match interface {
-            Ok(result) => {
-                let (actuator_tx, actuator_rx):
-                 (mpsc::Sender<actuator::ActuatorMessage>, mpsc::Receiver<actuator::ActuatorMessage>) = mpsc::channel();
-
-                let mut actuator = Actuator::new(
-                    ActuatorProps {
-                        name: actuator.name.clone(),
-                        max_pressure: actuator.max_pressure,
-                        flow_change_per_sec: actuator.flow_change_per_sec,
-                        flow_stop_angle: actuator.flow_stop_angle,
-                        interface: result as Box<dyn ActuatorInterface + Send + Sync>,
-                        rx: actuator_rx,
-                        tx: puppet_tx.clone()
-                    }
-                );
-                actuators.insert(actuator.name.to_string(), actuator_tx);
-                thread::Builder::new().name(actuator.name.to_owned()).spawn(move || {
-                    actuator.start();        
-                }).unwrap();
-            }
-            Err(e) => {
-                println!("Error initializing actuator interface: {:?} - {:?}", actuator.name, e);
-            }
-        };
-    }
-
-    let orientation_interface: Result<Box<dyn OrientationInterface + Send + Sync>, Box<dyn Error>> =
-    match config.orientation.interface_type.as_str() {
+    let int_result: Result<Box<dyn ActuatorInterface + Send + Sync>, Box<dyn Error>> = match actuator.interface_type.as_str() {
         #[cfg(not(target_os = "windows"))]
         "rpi" => {
-            orientation::rpi_interface::OrientationRPIInterface::new(
-                orientation::rpi_interface::OrientationRPIInterfaceProps {
-                    orientation_servo: config.orientation.orientation_servo
+            actuator::rpi_interface::RPIInterface::new(
+                    actuator::rpi_interface::RPIInterfaceProps {
+                    pressure_i2c_dev: actuator.pressure_device.clone(),
+                    inlet_motor: actuator.inlet_motor,
+                    outlet_motor: actuator.outlet_motor,
+                    flow_control_servo: actuator.flow_control_servo
                 }
             )
         },
         "dummy" => {
-            OrientationDummyInterface::new()
+            DummyInterface::new(
+                DummyInterfaceProps { 
+                    speed_factor: actuator.speed_factor
+                }
+            )
         },
-        _ => Err(SoftError::new(format!("Invalid orientation interface type: {:?}",&config.orientation.interface_type).as_str()).into())
-    };
+        _ => Err(SoftError::new(format!("Invalid actuator interface type: {:?}",actuator.interface_type).as_str()).into())
+    }.unwrap();
+
+    let interface = Arc::new(Mutex::new(int_result.unwrap()));
+
+    let mut actuators: HashMap<String, mpsc::Sender<actuator::ActuatorMessage>> = HashMap::new();
+
+    for actuator in &config.actuators {
+        println!("Creating actutor {:?}", actuator.name);        
+    
+
+        let (actuator_tx, actuator_rx):
+            (mpsc::Sender<actuator::ActuatorMessage>, mpsc::Receiver<actuator::ActuatorMessage>) = mpsc::channel();
+
+        let mut actuator = Actuator::new(
+            ActuatorProps {
+                name: actuator.name.clone(),
+                max_pressure: actuator.max_pressure,
+                flow_change_per_sec: actuator.flow_change_per_sec,
+                flow_stop_angle: actuator.flow_stop_angle,
+                interface: Arc::clone(&interface),
+                rx: actuator_rx,
+                tx: puppet_tx.clone()
+            }
+        );
+        actuators.insert(actuator.name.to_string(), actuator_tx);
+        thread::Builder::new().name(actuator.name.to_owned()).spawn(move || {
+            actuator.start();        
+        }).unwrap();           
+    }
 
     let mut orientation = Orientation::new(
         OrientationProps { 
-            interface: orientation_interface.unwrap() as Box<dyn OrientationInterface + Send + Sync>
+            interface: Arc::clone(&interface)
         }
     );
 

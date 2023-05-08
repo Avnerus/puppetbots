@@ -11,7 +11,7 @@
         "pressureDevice": "/dev/i2c-1",
         "flowStopAngle": 101,
         "maxPressure": 1200,
-        "flowChangePerSec": 0.4, 
+        "flowChangeTimeMs": 200, 
         "inletMotor": 1,
         "outletMotor": 2,
         "flowControlServo": 1

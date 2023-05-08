@@ -27,8 +27,7 @@ struct ServerConfig {
 #[serde(rename_all = "camelCase")]
 pub struct ActuatorConfig {
     name: String,
-    pressure_device: String,
-    interface_type: String,
+    pressure_device_index: u16,
     max_pressure: i16,
     flow_change_per_sec: f32,
     flow_stop_angle: f32,
@@ -40,17 +39,12 @@ pub struct ActuatorConfig {
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct OrientationConfig {
-    interface_type: String,
-    orientation_servo: u16        
-}
-
-#[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
     server: ServerConfig,
     version: String,
-    actuators: Vec<ActuatorConfig>,
-    orientation: OrientationConfig
+    interface_type: String,
+    orientation_servo: u16,   
+    actuators: Vec<ActuatorConfig>
 }
 
 fn read_config(config_file:String) -> Result<Config, Box<dyn std::error::Error>> {

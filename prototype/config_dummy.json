@@ -3,19 +3,15 @@
     "server": {
         "port": 3012
     },
-    "orientation": {    
-      "interfaceType": "dummy",
-      "orientationServo": 3
-    },    
+    "interfaceType": "dummy",   
+    "orientationServo": 3,
     "actuators": [
       {
         "name": "LArm",
-        "interfaceType": "dummy",
-        "speedFactor": 1.0,
-        "pressureDevice": "/dev/i2c-1",
-        "flowStopAngle": 100.5,
+        "pressureDeviceIndex": 1,        
         "maxPressure": 800,
-        "flowChangePerSec": 0.4, 
+        "flowChangeTimeMs": 200, 
+        "maxFlowAngle": 90,
         "inletMotor": 1,
         "outletMotor": 2,
         "flowControlServo": 1

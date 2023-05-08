@@ -1,17 +1,16 @@
-#[cfg(not(target_os = "windows"))]
-pub mod rpi_interface;
-pub mod dummy_interface;
+use crate::puppet::hardware::{HardwareInterface};
 
 const MINIMUM_ANGLE_DIFFERENCE:f32 = 2.0;
 
-
 pub struct OrientationProps {
-    pub interface: Box<dyn OrientationInterface + Send + Sync>,
+    pub interface: Arc<Mutex<Box<dyn HardwareInterface + Send + Sync>>>,
+    pub servo_index: u16
 }
 
 pub struct Orientation {
     pub current_angle:u8,
-    pub interface: Box<dyn OrientationInterface + Send + Sync>,
+    pub servo_index: u16,
+    pub interface: Arc<Mutex<Box<dyn HardwareInterface + Send + Sync>>>
 }
 
 pub trait OrientationInterface {
@@ -28,7 +27,7 @@ impl Orientation {
     pub fn set_orientation_angle(&mut self, angle: u8) {
         if (angle as f32 - self.current_angle as f32).abs() >= MINIMUM_ANGLE_DIFFERENCE {
             println!("Orientation: Set angle to {}", angle);
-            self.interface.set_angle(angle.into());
+            self.interface.lock().unwrap().set_servo_angle(self.servo_index, angle.into());
             self.current_angle = angle;
         }
     }
