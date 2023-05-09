@@ -92,10 +92,10 @@ impl RPIInterface {
 }
 impl HardwareInterface for RPIInterface {
     fn set_dc_motor(&mut self, index: u16, speed: f32) {
-        self.dc_motors[index].set_throttle(&mut self.dc_pwms[index], speed).unwrap();
+        self.dc_motors[index.into()].set_throttle(&mut self.dc_pwms[index.into()], speed).unwrap();
     }
     fn set_servo_angle(&mut self, index:u16, angle: f32) {
-        let channel = int_to_channel(index).ok_or("Invalid servo index")?;
+        let channel = int_to_channel(index).unwrap();
         self.servo_kit.set_angle(angle, channel);
     } 
     fn read_adc(&mut self, index:u16) -> i16 {

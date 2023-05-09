@@ -32,11 +32,8 @@ pub fn start(
         #[cfg(not(target_os = "windows"))]
         "rpi" => {
             self::hardware::rpi_interface::RPIInterface::new(
-                    actuator::rpi_interface::RPIInterfaceProps {
-                    pressure_i2c_dev: actuator.pressure_device.clone(),
-                    inlet_motor: actuator.inlet_motor,
-                    outlet_motor: actuator.outlet_motor,
-                    flow_control_servo: actuator.flow_control_servo
+                self::hardware::rpi_interface::RPIInterfaceProps {
+                    i2c_dev: "/dev/i2c-1"
                 }
             )
         },
