@@ -17,13 +17,12 @@ pub enum State {
 
 #[derive(PartialEq)]
 pub enum ConfigMessage {
-    MaxPressure,
-    FlowChangePerSec    
+    MaxPressure        
 }
 
 pub struct ActuatorProps {
     pub name: String,
-    pub interface: Arc<dyn HardwareInterface + Send + Sync>,
+    pub interface: Arc<Mutex<Box<dyn HardwareInterface + Send + Sync>>>,
     pub flow_change_time_ms: u16,
     pub flow_max_angle: u16,
     pub max_pressure: i16,
@@ -69,7 +68,7 @@ pub struct Actuator {
     pub inlet_motor: u16,
     pub outlet_motor: u16,
     pub flow_control_servo: u16,
-    pub interface: Arc<Mutex<Box<dyn ActuatorInterface + Send + Sync>>>,
+    pub interface: Arc<Mutex<Box<dyn HardwareInterface + Send + Sync>>>,
     rx: mpsc::Receiver<ActuatorMessage>,
     tx: mpsc::Sender<Vec<u8>>,
     action_queue: LinkedList<Box<ActuatorAction>>
@@ -79,12 +78,16 @@ impl Actuator {
     pub fn new(props: ActuatorProps) -> Self {
         Actuator {
             name: props.name,
-            interface: Arc::new(Mutex::new(props.interface)),
+            interface: props.interface,
             flow_speed: Arc::new(Mutex::new(0.0)),
             rx: props.rx,
             tx: props.tx,
             pressure: 0,
             max_pressure: props.max_pressure,
+            pressure_device_index: props.pressure_device_index,
+            inlet_motor: props.inlet_motor,
+            outlet_motor: props.outlet_motor,
+            flow_control_servo: props.flow_control_servo,
             flow_change_time_ms: props.flow_change_time_ms,
             flow_max_angle: props.flow_max_angle,
             state: Arc::new(Mutex::new(State::Idle)),
@@ -173,14 +176,16 @@ impl Actuator {
                         let delay = action.delay;
                         let interface = Arc::clone(&self.interface);
                         let flow_speed = Arc::clone(&self.flow_speed);
+                        let inlet_motor = self.inlet_motor;
+                        let outlet_motor = self.outlet_motor;
 
                         thread::spawn(move || {                           
                             println!("Waiting {}ms", delay);          
                             thread::sleep(Duration::from_millis(delay.into()));                            
                             println!("Done waiting");                          
                             let mut int = interface.lock().unwrap();
-                            int.set_inlet_valve(0.0);
-                            int.set_outlet_valve(0.0);
+                            int.set_dc_motor(inlet_motor, 0.0);
+                            int.set_dc_motor(outlet_motor, 0.0);
                             *flow_speed.lock().unwrap() = target_flow_speed;
                             *state.lock().unwrap() = State::Idle;    
                         });                         
@@ -203,8 +208,8 @@ impl Actuator {
     }  
     fn stop(&mut self) {
         let mut int = self.interface.lock().unwrap();
-        self.set_dc_motor(self.inlet_motor, 0.0);
-        self.set_dc_motor(self.outlet_motor, 0.0);
+        int.set_dc_motor(self.inlet_motor, 0.0);
+        int.set_dc_motor(self.outlet_motor, 0.0);
         
         *self.state.lock().unwrap() = State::Idle;
     }
@@ -216,21 +221,6 @@ impl Actuator {
         } 
     }
     fn read_pressure(&mut self) -> i16 {
-        self.interface.lock().unwrap().read_adc(self.pressure_device_index);
-    }
-    fn reset_flow(
-        &mut self        
-    ) {
-        println!("Resetting flow");
-
-        let flow_change_time = *self.flow_speed.lock().unwrap() / self.flow_change_per_sec * 1000.0;
-
-        self.action_queue.push_back(
-            Box::new(ActuatorAction {
-                state: State::FlowDecreasing,
-                speed: 0.0,
-                delay: flow_change_time as u16                                   
-            })
-        );        
+        self.interface.lock().unwrap().read_adc(self.pressure_device_index)
     }
 }

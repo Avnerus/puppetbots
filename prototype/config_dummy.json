@@ -11,7 +11,7 @@
         "pressureDeviceIndex": 1,        
         "maxPressure": 800,
         "flowChangeTimeMs": 200, 
-        "maxFlowAngle": 90,
+        "flowMaxAngle": 90,
         "inletMotor": 1,
         "outletMotor": 2,
         "flowControlServo": 1

@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crate::puppet::hardware::{HardwareInterface};
 
 const MINIMUM_ANGLE_DIFFERENCE:f32 = 2.0;
@@ -20,7 +22,8 @@ pub trait OrientationInterface {
 impl Orientation {
     pub fn new(props: OrientationProps) -> Self {
         Orientation {            
-            interface: props.interface,           
+            interface: props.interface,  
+            servo_index: props.servo_index,         
             current_angle: 0
         }
     }   

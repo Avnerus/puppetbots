@@ -15,7 +15,7 @@ impl DummyInterface {
     pub fn new(props: DummyInterfaceProps) -> Result<Box<dyn HardwareInterface + Send + Sync>,Box<dyn Error>> {
         Ok(
             Box::new(DummyInterface {
-                speed_factor: 1.0,
+                speed_factor: props.speed_factor,
                 pressure: 0,
                 expand_speed: 0.0,
                 contract_speed: 0.0
@@ -33,11 +33,12 @@ impl DummyInterface {
 impl HardwareInterface for DummyInterface {
     fn set_dc_motor(&mut self, index: u16, speed: f32) {
         println!("Dummy setting dc motor: {} to speed {}", index, speed);
+        self.update();
     }
     fn set_servo_angle(&mut self, index:u16, angle: f32) {
         println!("Dummy setting servo: {} to angle {}", index, angle);
     } 
-    fn read_adc(&mut self, index:u16) -> i16 {
-       return pressure;
+    fn read_adc(&mut self, _index:u16) -> i16 {
+       return self.pressure;
     }   
 }

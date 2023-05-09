@@ -11,6 +11,7 @@ mod hardware;
 
 use self::actuator::{Actuator, ActuatorProps};
 use self::hardware::dummy_interface::{DummyInterface, DummyInterfaceProps};
+use self::hardware::HardwareInterface;
 
 mod orientation;
 use self::orientation::{Orientation, OrientationProps};
@@ -27,10 +28,10 @@ pub fn start(
 
     println!("Creating interface type {:?}", config.interface_type);
 
-    let int_result: Result<Box<dyn ActuatorInterface + Send + Sync>, Box<dyn Error>> = match actuator.interface_type.as_str() {
+    let int_result: Result<Box<dyn HardwareInterface + Send + Sync>, Box<dyn Error>> = match config.interface_type.as_str() {
         #[cfg(not(target_os = "windows"))]
         "rpi" => {
-            actuator::rpi_interface::RPIInterface::new(
+            self::hardware::rpi_interface::RPIInterface::new(
                     actuator::rpi_interface::RPIInterfaceProps {
                     pressure_i2c_dev: actuator.pressure_device.clone(),
                     inlet_motor: actuator.inlet_motor,
@@ -42,12 +43,12 @@ pub fn start(
         "dummy" => {
             DummyInterface::new(
                 DummyInterfaceProps { 
-                    speed_factor: actuator.speed_factor
+                    speed_factor: 1.0
                 }
             )
         },
-        _ => Err(SoftError::new(format!("Invalid actuator interface type: {:?}",actuator.interface_type).as_str()).into())
-    }.unwrap();
+        _ => Err(SoftError::new(format!("Invalid actuator interface type: {:?}",config.interface_type).as_str()).into())
+    };
 
     let interface = Arc::new(Mutex::new(int_result.unwrap()));
 
@@ -63,9 +64,13 @@ pub fn start(
         let mut actuator = Actuator::new(
             ActuatorProps {
                 name: actuator.name.clone(),
-                max_pressure: actuator.max_pressure,
-                flow_change_per_sec: actuator.flow_change_per_sec,
-                flow_stop_angle: actuator.flow_stop_angle,
+                max_pressure: actuator.max_pressure,  
+                flow_change_time_ms: actuator.flow_change_time_ms,
+                flow_control_servo: actuator.flow_control_servo,
+                flow_max_angle: actuator.flow_max_angle,
+                inlet_motor: actuator.inlet_motor,
+                outlet_motor: actuator.outlet_motor,
+                pressure_device_index: actuator.pressure_device_index,                                  
                 interface: Arc::clone(&interface),
                 rx: actuator_rx,
                 tx: puppet_tx.clone()
@@ -79,7 +84,8 @@ pub fn start(
 
     let mut orientation = Orientation::new(
         OrientationProps { 
-            interface: Arc::clone(&interface)
+            interface: Arc::clone(&interface),
+            servo_index: config.orientation_servo
         }
     );
 
@@ -132,16 +138,8 @@ pub fn start(
                                         0
                                     )
                                 ).unwrap();                         
-                            },
-                            'R' => {
-                                actuator_tx.send(
-                                    actuator::ActuatorMessage::set_state (
-                                        actuator::State::FlowReset,
-                                        1.0,
-                                        0
-                                    )
-                                ).unwrap();                         
-                            }
+                            },                    
+                        
                             _ => {
                                 println!("Unknown actuator motor command! {}", motor_command);
                             }
