@@ -33,7 +33,7 @@ pub fn start(
         "rpi" => {
             self::hardware::rpi_interface::RPIInterface::new(
                 self::hardware::rpi_interface::RPIInterfaceProps {
-                    i2c_dev: "/dev/i2c-1"
+                    i2c_dev: "/dev/i2c-1".to_string()
                 }
             )
         },
