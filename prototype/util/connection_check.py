@@ -7,8 +7,8 @@ from time import sleep
 from adafruit_servokit import ServoKit
 
 skit = ServoKit(channels=16)
-skit.servo[1].angle = 98.5
-skit.servo[0].angle = 99
+skit.servo[1].angle = 0
+skit.servo[0].angle = 0
 
 mkit = MotorKit()
 
@@ -40,30 +40,18 @@ mkit.motor4.throttle = 0.0
 sleep(2)
 
 print("Actuator 1 - Increase flow (S1)")
-skit.servo[0].angle = 0
-sleep(2)
-print("Stop")
-skit.servo[0].angle = 99
-sleep(2)
+skit.servo[0].angle = 90
+sleep(1)
 print("Actuator 1 - Decrease flow (S1)")
-skit.servo[0].angle = 180
-sleep(2)
-print("Stop")
-skit.servo[0].angle = 99
-sleep(2)
+skit.servo[0].angle = 0
+sleep(1)
 
-print("Actuator 2 - Increase flow (S2)")
+print("Actuator 2 - Increase flow (S1)")
+skit.servo[1].angle = 90
+sleep(1)
+print("Actuator 2 - Decrease flow (S1)")
 skit.servo[1].angle = 0
-sleep(2)
-print("Stop")
-skit.servo[1].angle = 98.5
-sleep(2)
-print("Actuator 2 - Decrease flow (S2)")
-skit.servo[1].angle = 180
-sleep(2)
-print("Stop")
-skit.servo[1].angle = 98.5
-sleep(2)
+sleep(1)
 
 i2c = busio.I2C(board.SCL, board.SDA)
 ads = ADS.ADS1115(i2c)

@@ -14,36 +14,13 @@ ads = ADS.ADS1115(i2c)
 chan1 = AnalogIn(ads, ADS.P0, ADS.P1)
 chan2 = AnalogIn(ads, ADS.P2, ADS.P3)
 
-print("Actuator 1 - Pressure readout")
-for n in range(5):
-    print("Pressure: {}".format(chan1.value))
-    sleep(1)
-
 print("Actuator 1 - Open outlet (M2)")
 mkit.motor2.throttle = 1.0 
+print("Actuator 2 - Open outlet (M4)")
+mkit.motor4.throttle = 1.0 
+
+print("Close")
 sleep(5)
 print("Close")
 mkit.motor2.throttle = 0.0 
-
-print("Actuator 1 - Pressure readout")
-for n in range(5):
-    print("Pressure: {}".format(chan1.value))
-    sleep(1)
-
-print("Actuator 2 - Pressure readout")
-for n in range(5):
-    print("Pressure: {}".format(chan2.value))
-    sleep(1)
-
-
-
-print("Actuator 2 - Open outlet (M4)")
-mkit.motor4.throttle = 1.0 
-sleep(5)
-print("Close")
 mkit.motor4.throttle = 0.0 
-
-print("Actuator 2 - Pressure readout")
-for n in range(5):
-    print("Pressure: {}".format(chan2.value))
-    sleep(1)
