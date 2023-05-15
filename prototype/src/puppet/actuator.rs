@@ -99,6 +99,7 @@ impl Actuator {
 
         let mut last_admin_update = Instant::now();  
         self.stop();
+        self.interface.lock().unwrap().set_servo_angle(self.flow_control_servo, self.flow_max_angle as f32);
        
         loop {
             if let Ok(msg) = self.rx.try_recv() {
@@ -152,7 +153,11 @@ impl Actuator {
                     match action.state {
                         State::FlowChange => {
                             target_flow_speed = action.speed;
-                            let flow_angle = self.flow_max_angle as f32 * target_flow_speed;
+                            // Max angle is no flow, 0 angle is max flow
+                            let flow_angle = 
+                                self.flow_max_angle as f32 - 
+                                (self.flow_max_angle as f32 * target_flow_speed)
+                            ;                            
                             let mut int = self.interface.lock().unwrap();
                             int.set_servo_angle(self.flow_control_servo, flow_angle);
                         }            

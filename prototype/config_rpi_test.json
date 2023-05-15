@@ -3,13 +3,13 @@
     "server": {
         "port": 3012
     },
-    "interfaceType": "dummy",   
-    "orientationServo": 3,
+    "interfaceType": "rpi",   
+    "orientationServo": 2,
     "actuators": [
       {
-        "name": "LArm",
+        "name": "test",
         "pressureDeviceIndex": 1,        
-        "maxPressure": 800,
+        "maxPressure": 500,
         "flowChangeTimeMs": 200, 
         "flowMaxAngle": 80,
         "inletMotor": 1,
@@ -18,4 +18,3 @@
       }
     ]
 }
-
