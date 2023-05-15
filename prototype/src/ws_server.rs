@@ -15,6 +15,8 @@ use crate::soft_error::SoftError;
 use crate::Config;
 
 const ADMIN_ROLE : u8 = 0;
+const PUPPET_ROLE : u8 = 1;
+
 
 #[derive(Serialize, Deserialize)]
 struct Puppet {
@@ -186,7 +188,7 @@ pub fn start(
                     match msg[1] as char {
                         'P' => {
                         //    println!("Pressure sensing message!");
-                            if let Some(sa) = state.puppeteers.get(&ADMIN_ROLE) {
+                            if let Some(sa) = state.puppeteers.get(&PUPPET_ROLE) {
                                sa.send(msg).unwrap();
                             }
                         }
