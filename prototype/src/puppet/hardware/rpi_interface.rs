@@ -92,7 +92,8 @@ impl RPIInterface {
 }
 impl HardwareInterface for RPIInterface {
     fn set_dc_motor(&mut self, index: u16, speed: f32) {
-        self.dc_motors[index as usize].set_throttle(&mut self.dc_pwms[index as usize], speed).unwrap();
+        // Motor indexes are 1-based
+        self.dc_motors[index as usize - 1].set_throttle(&mut self.dc_pwms[index as usize], speed).unwrap();
     }
     fn set_servo_angle(&mut self, index:u16, angle: f32) {
         let channel = int_to_channel(index).unwrap();

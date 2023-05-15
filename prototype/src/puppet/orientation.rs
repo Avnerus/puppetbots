@@ -29,7 +29,7 @@ impl Orientation {
     }   
     pub fn set_orientation_angle(&mut self, angle: u8) {
         if (angle as f32 - self.current_angle as f32).abs() >= MINIMUM_ANGLE_DIFFERENCE {
-            println!("Orientation: Set angle to {}", angle);
+            println!("Orientation: Set angle to {}", angle as f32);
             self.interface.lock().unwrap().set_servo_angle(self.servo_index, angle.into());
             self.current_angle = angle;
         }
