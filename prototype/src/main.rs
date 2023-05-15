@@ -33,8 +33,7 @@ pub struct ActuatorConfig {
     flow_max_angle: u16,
     inlet_motor: u16,
     outlet_motor: u16,
-    flow_control_servo: u16,
-    speed_factor: f32
+    flow_control_servo: u16    
 }
 
 #[derive(Deserialize, Serialize, Debug)]
