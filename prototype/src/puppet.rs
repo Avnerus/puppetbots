@@ -167,7 +167,32 @@ pub fn start(
                 'O' => {
                     let angle = msg[1];
                     orientation.set_orientation_angle(angle.into());
-                }
+                },
+                'M' => {
+                    let motor_index = msg[2];
+                    let motor_type = msg[1] as char;
+                    let value = msg[3];
+    
+                    println!(
+                        "Puppet actuator command {}[{}] to {}", 
+                        motor_type, 
+                        motor_index,
+                        value
+                    );
+
+                    match motor_type {
+                        'S' => {
+                            interface.lock().unwrap().set_servo_angle(motor_index.into(), value.into());
+                        },
+                        'D' => {
+                            interface.lock().unwrap().set_dc_motor(motor_index.into(), value as f32 / 255.0);
+                        }
+                        _ => {
+                            println!("Unknown motor type! {}", motor_type);
+                        } 
+                    }                      
+             
+                },
                 _ => {
                     println!("Unknown puppet command! {}",command);
                 }
