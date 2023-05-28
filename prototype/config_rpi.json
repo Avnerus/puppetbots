@@ -1,36 +1,20 @@
 {
-    "version": "1.0",
-    "server": {
-        "port": 3012
-    },
-    "actuators": [
-      {
-        "name": "LArm",
-        "interfaceType": "rpi",
-        "speedFactor": 1.0,
-        "pressureDevice": "/dev/i2c-1",
-        "flowStopAngle": 101,
-        "maxPressure": 800,
-        "flowChangePerSec": 0.6, 
-        "inletMotor": 1,
-        "outletMotor": 2,
-        "flowControlServo": 1
-      },
-      {
-        "name": "RArm",
-        "interfaceType": "rpi",
-        "speedFactor": 1.0,
-        "pressureDevice": "/dev/i2c-1",
-        "flowStopAngle": 100.5,
-        "maxPressure": 800,
-        "flowChangePerSec": 0.6, 
-        "inletMotor": 3,
-        "outletMotor": 4,
-        "flowControlServo": 2
-      }
-    ],
-    "orientation": {
-      "interfaceType": "rpi",
-      "orientationServo": 3
+  "version": "1.0",
+  "server": {
+      "port": 3012
+  },
+  "interfaceType": "rpi",   
+  "orientationServo": 2,
+  "actuators": [
+    {
+      "name": "test",
+      "pressureDeviceIndex": 1,        
+      "maxPressure": 500,
+      "flowChangeTimeMs": 200, 
+      "flowMaxAngle": 80,
+      "inletMotor": 1,
+      "outletMotor": 2,
+      "flowControlServo": 1
     }
+  ]
 }

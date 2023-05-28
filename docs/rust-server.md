@@ -1,5 +1,13 @@
 # Rust server
 
+## Configuring the server
+```
+$ cd puppetbots/prototype
+```
+Edit the config file `config-rpi.json`:
+
+1. 
+
 ## Starting the server
 ```
 $ cd puppetbots/prototype
