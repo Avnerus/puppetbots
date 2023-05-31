@@ -1,6 +1,12 @@
 # Touch Designer Controller
 The touch designer controller mediates between a hand tracking interface and a [Rust Server](rust-server.md) controlling the puppet.
 
+## Install TouchDesigner
+
+Here's a download page: https://derivative.ca/download
+
+You'll have to register to use it.
+
 ## Creating the python environments
 Install Miniconda.
 
@@ -31,13 +37,21 @@ conda activate rokoko
 pip3 install lz4
 ```
 
+Type `conda info --envs` to find the directories with environments, we will need them later.
+
 ## Selecting the active hand tracking interface
-Once the environments have been created, activate the appropriate node to select the environment.
+Once the environments have been created, activate the appropriate node to select the environment (see the steps below). We will provide you with Rokoko motion capture glove, but there's only 4 of them for 6 groups so you'll have to share them. For testing you can use _Mediapipe_ which is software that does image recognition via the webcam to capture the hand motion.
 
 ### Mediapipe
-For `mediapipe`, activate the `mediapipe_env` node by toggling the `Active` property on the right window, and deactivate the `rokoko_env` node.
+For `mediapipe`, activate the `mediapipe_env` node (its in the middle) by toggling the `Active` property on the right window, and deactivate the `rokoko_env` node.
 
-Additionally, locate the `mediapipe` container node and make sure that `Cooking` is enabled.
+Additionally, locate the `MediaPipe` (at the left bottom) node and make sure that `Cooking` is enabled (cooking is a cross toggle at the left of the square).
+
+Now we need to write the path to conda environment that we obtained before to the script. Right click on `mediapip_env` and choose "edit contents". Update conda_envs_folder so it points to the "mediapipe" environment location. On windows be carefult to replace "\" in the path with "/" :)
+
+After doing these changes you will need to restart TouchDesigner and re-open the project.
+
+If everything works as expected you should be seeing image from your camera in the node tree and if you put the finger in front of the camera it should recognize fingers and mark them with dots of different colors.
 
 ### Rokoko smartgloves
 For `rokoko` activate the `rokoko_env` node and deactivate the `mediapipe_env` node.

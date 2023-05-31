@@ -19,8 +19,9 @@ _If there is a screw shortage you can use only two screws out of the four holes 
 
 ![dc bonnet](dc-bonnet.jpg)
 
+5. Connect the **12V power adapter** to the dc motor bonnet.
 
-5. Mount the raspberry pi in the center of the panel.
+6. Mount the raspberry pi in the center of the panel.
 
 
 ### Solenoid valves
