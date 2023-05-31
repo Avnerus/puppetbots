@@ -30,7 +30,7 @@ pub struct RPIInterfaceProps {
 }
 
 pub struct RPIInterface {
-    adc: Adc,
+    adc: Option<Adc>,
     dc_motors: Vec<DcMotor>,
     dc_pwms: Vec<Pca9685<I2cdev>>,    
     servo_kit: AdafruitServoKit    
@@ -62,14 +62,21 @@ impl RPIInterface {
         let mut dc_pwms = Vec::new();
 
         for i in 0..4 {
-            let mut pwm = init_pwm(None)?;
-            let motor = int_to_motor_enum(i as u16 + 1).ok_or("Invalid motor index")?;
-            let dc_motor = DcMotor::try_new(&mut pwm, motor)?;
-            dc_motors.push(dc_motor);
-            dc_pwms.push(pwm);
+            match init_pwm(None) {
+                Ok(mut pwm) => {
+                    let motor = int_to_motor_enum(i as u16 + 1).ok_or("Invalid motor index")?;
+                    let dc_motor = DcMotor::try_new(&mut pwm, motor)?;
+                    dc_motors.push(dc_motor);
+                    dc_pwms.push(pwm);
+                },
+                Err(err) => {
+                    print!("Skipped DC motor init {}\n",err);
+                }
+            }
         }
 
         let servo_kit = AdafruitServoKit::new();        
+
 
         let mut adc = Ads1x1x::new_ads1115(
             I2cdev::new(props.i2c_dev)?,
@@ -79,13 +86,23 @@ impl RPIInterface {
         match adc.set_full_scale_range(FullScaleRange::Within4_096V) {
             Ok(()) => Ok(
                 Box::new(RPIInterface {
-                    adc,
+                    adc: Some(adc),
                     dc_motors,
                     dc_pwms,        
                     servo_kit                    
                 })
             ),
-            Err(e) => Err(format!("I2CError setting ADC range {:?}",e))?
+            Err(e) => {
+                print!("Pressure sensing board I2CError setting ADC range {:?}\n",e);
+                Ok(
+                    Box::new(RPIInterface {
+                        adc: None,
+                        dc_motors,
+                        dc_pwms,        
+                        servo_kit                    
+                    })
+                )
+            }
         }
 
     } 
@@ -93,23 +110,29 @@ impl RPIInterface {
 impl HardwareInterface for RPIInterface {
     fn set_dc_motor(&mut self, index: u16, speed: f32) {
         // Motor indexes are 1-based
-        self.dc_motors[index as usize - 1].set_throttle(&mut self.dc_pwms[index as usize], speed).unwrap();
+        if self.dc_motors.len() > 0 {
+            self.dc_motors[index as usize - 1].set_throttle(&mut self.dc_pwms[index as usize], speed).unwrap();
+        }
     }
     fn set_servo_angle(&mut self, index:u16, angle: f32) {
         let channel = int_to_channel(index).unwrap();
         self.servo_kit.set_angle(angle, channel);
     } 
     fn read_adc(&mut self, index:u16) -> i16 {
-        match index {
-            1 => {
-                block!(self.adc.read(&mut channel::DifferentialA0A1)).unwrap()
-            },
-            2 => {
-                block!(self.adc.read(&mut channel::DifferentialA2A3)).unwrap()
-            },
-            _ => {
-                panic!("Invalid ADC index")
+        if let Some(mut adc) = self.adc.as_mut() {
+            match index {
+                1 => {
+                    block!(adc.read(&mut channel::DifferentialA0A1)).unwrap()
+                },
+                2 => {
+                    block!(adc.read(&mut channel::DifferentialA2A3)).unwrap()
+                },
+                _ => {
+                    panic!("Invalid ADC index")
+                }
             }
+        } else {
+            return 0;
         }
     }
 }
