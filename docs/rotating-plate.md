@@ -26,7 +26,7 @@ $ python3 util/connection_check_servo.py
 
 
 ## Usage
-The oritentation of the puppet can be detected from the hand position either via `MediaPipe Vision AI` or `Rokoko Smart Gloves`. The value is processed in the [Touch Designer controller](touch-designer.md).
+The oritentation of the puppet can be detected from the hand position either via _MediaPipe Vision AI_ or _Rokoko Smart Gloves_. The value is processed in the [Touch Designer controller](touch-designer.md).
 
 ### Mediapipe 
 Orientation value is picked up as an angle between `0` and `180` on the node `orientation_value_ai`.
