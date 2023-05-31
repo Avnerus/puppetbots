@@ -48,10 +48,22 @@ fn int_to_motor_enum(index: u16) -> Option<Motor> {
 
 fn int_to_channel(index: u16) -> Option<Channel> {
     match index {
-        1 => Some(Channel::C0),
-        2 => Some(Channel::C1),
-        3 => Some(Channel::C2),
-        4 => Some(Channel::C3),
+        0 => Some(Channel::C0),
+        1 => Some(Channel::C1),
+        2 => Some(Channel::C2),
+        3 => Some(Channel::C3),
+        4 => Some(Channel::C4),
+        5 => Some(Channel::C5),
+        6 => Some(Channel::C6),
+        7 => Some(Channel::C7),
+        8 => Some(Channel::C8),
+        9 => Some(Channel::C9),
+        10 => Some(Channel::C10),
+        11 => Some(Channel::C11),
+        12 => Some(Channel::C12),
+        13 => Some(Channel::C13),
+        14 => Some(Channel::C14),
+        15 => Some(Channel::C15),
         _ => None
     }
 }
