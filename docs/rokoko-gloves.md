@@ -9,7 +9,7 @@
 
 4. From the right panel, add an actor.
 
-5. Connect a smart glove, when asked, configure it with the WiFi.
+5. Connect a smart glove with a usb cable, when asked, configure it with the WiFi. Make sure the IP address in the dialog window is IP address of your laptop.
 
 6. From the right tab drag the glove to the actor.
 
