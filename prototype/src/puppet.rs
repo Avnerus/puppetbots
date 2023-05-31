@@ -162,7 +162,7 @@ pub fn start(
                                     actuator.flow_change_per_sec
                             )).unwrap();
                         }
-                    }*/cd
+                    }*/
                 },
                 'O' => {
                     let angle = msg[1];
