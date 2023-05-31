@@ -1,6 +1,12 @@
 # Touch Designer Controller
 The touch designer controller mediates between a hand tracking interface and a [Rust Server](rust-server.md) controlling the puppet.
 
+## Install TouchDesigner
+
+Here's a download page: https://derivative.ca/download
+
+You'll have to register to use it.
+
 ## Creating the python environments
 Install Miniconda.
 
