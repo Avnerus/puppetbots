@@ -96,7 +96,11 @@ fn handle_message(
                 'O' => {
                     // Orientation command
                     server.server_tx.send(data).unwrap();
-                }
+                },
+                'M' => {
+                    // Custom motor command
+                    server.server_tx.send(data).unwrap();
+                },
                 'C' => {
                     // config command
                     let action = str::from_utf8(&data[1..4]).unwrap();
