@@ -12,7 +12,7 @@ The plate is operated by an SG92R servo motor and is located outisde of the [pne
 
 4. Conncet the SG92R motor to the bonnet. The dark (brown or black) wire should be on the side that says **G**.
 5. Mount the plate on the horns.
-6. Mount the puppet's body onto the plate.
+6. Mount the puppet's body onto the plate. The body consists of a bottle that is tightened with screws.
 
 ## Test
 The plate can be tested via the following script:
