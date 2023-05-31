@@ -6,3 +6,4 @@
 - [Rust server (Raspberry Pi)](rust-server.md)
 - [Touch Designer Controller](touch-designer.md)
 - [Pneumatic actuators](pneumatic-actuators.md)
+- [Rokoko smart gloves](rokoko-gloves.md)
