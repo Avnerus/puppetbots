@@ -1,6 +1,9 @@
 # Pneumatics Panel
 ## Assembly
 
+### Panel bolts
+Screw the panel bolts to the panel to have it lifted, so that the mountintg screws do not touch the bottom.
+
 ### Raspberry Pi
 The Raspberry Pi is the central controller of the telepuppet. 
 1. Screw the raspberry pi to the _Rpi mount_ component. 
