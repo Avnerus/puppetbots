@@ -41,21 +41,41 @@ The solenoid valves control the incoming and outgoing air from an actuator. They
 ### Servo valves
 The servo valve regulates the flow of air entering the actuator proportionally. It is comprised of a manual ball valve and servo motor that moves the handle.
 
+Here are the parts needed to assemble a single servo valve:
+
+![pneumatics_panel-inventory.jpg](pneumatics_panel-inventory.jpg)
+
+And here how it should look like when assembled:
+
+![pneumatics_panel-assembled.jpg](pneumatics_panel-assembled.jpg)
+
 ### Calibrating the servo valve
-The ball valve is fully open when the handle is at a horizontal position and is fully closed the handle is at a vertical position.
+The ball valve is fully open when the handle is at a parallel to the valve and is fully closed the handle is perpendicular to the valve.
 
 The servo motor connects to the ball valve via a coupling adapter.
 
-1. First, the servo horn should be calibrated so that it starts at the fully horizontal position, matching the ball valve's handle position.
+Servo motor is wired to controller which can send commands to set the angle to any value within 0..80 degrees range.
 
-2. Use the `connection_check_servo.py` script to move the servo motor between 0 and 80 degrees. The horn should be placed on the servo so that it is horizontal at `0` degrees, and rotates clockwise to a vertical position at `80` degrees.
+Servo horn should be attached to the servo in a way that when controller send "0" angle horn is in horizontal position like on the picture below:
+
+![pneumatics_panel-calibrated.jpg](pneumatics_panel-calibrated.jpg)
+
+Servo horn should be calibrated so that when the controller sends command to set rotation to 0 at the fully horizontal position, matching the ball valve's handle position.
+
+So in zero 
+
+1. Use the `connection_check_servo.py` script to move the servo motor to 0 degrees.
+2. Now attach the horn to the servo, so it is in a position like on the photo above ^
+3. Try moving the servo motor to 80 degrees with the same script, `connection_check_servo.py`. Horn now should be +-perpendicular to the valve.
 
 ### Assembling the servo valve
 Once the servo is calibrated, the valve can be assembled.
 
-1. Place the ball valve in its designated loation and close the lid with the M3 screw.
+1. Place the ball valve in its designated location and close the lid with the M3 screw.
 
-2. Make sure the ball valve is at the open horizontal position. Place the coupling adapter on the handle.
+2. Make sure the ball valve is open (handle is parallel to valve body). Place the coupling adapter on the handle (use the side with square groove, see photo below).
+
+![pneumatics_panel-groove.jpg](pneumatics_panel-groove.jpg)
 
 3. Mount the servo motor into the coupling adapter and secure it via the screws. **Do not screw the servo too tightly**
 

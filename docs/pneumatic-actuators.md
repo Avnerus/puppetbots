@@ -23,8 +23,10 @@ The final result looks like this:
 2. You will need to fuse these pieces using the sealer. Set the sealer dial to number 6
 ![preumatic_actuators-merging.jpg](preumatic_actuators-merging.jpg)
 ![preumatic_actuators-burner.jpg](preumatic_actuators-burner.jpg)
+
 Sealing should be done according to this diagram:
 ![TPE diagram](tpe-diagram.jpg)
+
 Should be somthing like that in the end:
 ![preumatic_actuators-burned.jpg](preumatic_actuators-burned.jpg)
 3. Cut an opening for the tube and the edges of the balloon.
