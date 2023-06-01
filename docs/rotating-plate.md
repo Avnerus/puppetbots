@@ -1,7 +1,23 @@
 # Rotating Plate
 ## Assembly
+These are the pieces that you need on this stage:
+- flat rotating panel
+- cylindrical base of rotating panel
+- SG92R servo motor
+Follow these steps:
+1. Screw SG92R to the base like on the photo below:
+![base with servo](rotating_plate-base-with-servo1.jpg)
+![base with servo](rotating_plate-base-with-servo2.jpg)
+2. In the same pocket where was SG92R there's a plastic horn that needs to be screwed to the servo
+![horn connection](rotating_plate-base-with-cross.jpg)
+4. The flat rotating panel can be added on top of the base like that:
+![base with plate](rotating_plate-with-plate.jpg)
+5. Find the Servo+PI Bonnet in the kit, it looks like that:
+![servo bonnet](rotating_plate-bonnet.jpg)
+6. Connect the bonnet on top of the PI. Connect the servo to it:
+![bonnet on pi](rotating_plate-bonnet-on-pi.jpg)
 
-The plate is operated by an SG92R servo motor and is located outisde of the [pneumatic panel](pneumatics-panel.md).
+The plate is operated by an SG92R servo motor and is located outisde of the [wooden pneumatic panel](pneumatics-panel.md).
 1. Screw the servo into the base of the plate using the provided mounting screws.
 2. Attach the 'plus-shaped' horn to the servo, screw the horn using the provided small horn screw.
 3. Connect the _Servo Bonnet_ to the raspbery pi on the [pneumatic panel](pneumatics-panel.md) as shown in this image:
