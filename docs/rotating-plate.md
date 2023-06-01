@@ -1,22 +1,29 @@
 # Rotating Plate
 ## Assembly
-
-The plate is operated by an SG92R servo motor and is located outisde of the [pneumatic panel](pneumatics-panel.md).
-1. Screw the servo into the base of the plate using the provided mounting screws.
-2. Attach the 'plus-shaped' horn to the servo, screw the horn using the provided small horn screw.
-3. Connect the _Servo Bonnet_ to the raspbery pi on the [pneumatic panel](pneumatics-panel.md) as shown in this image:
-
-![servo bonnet](servo-bonnet.jpg)
+These are the pieces that you need on this stage:
+- flat rotating panel
+- cylindrical base of rotating panel
+- SG92R servo motor
+Follow these steps:
+1. Screw SG92R to the base like on the photo below:
+![base with servo](rotating_plate-base-with-servo-1.jpg)
+![base with servo](rotating_plate-base-with-servo-2.jpg)
+2. In the same pocket where was SG92R there's a plastic horn that needs to be screwed to the servo
+![horn connection](rotating_plate-base-with-cross.jpg)
+4. The flat rotating panel can be added on top of the base like that:
+![base with plate](rotating_plate-base-with-plate.jpg)
+5. Find the Servo+PI Bonnet in the kit, it looks like that:
+![servo bonnet](rotating_plate-bonnet.jpg)
+6. Connect the bonnet on top of the PI. Connect the servo to it:
+![bonnet on pi](rotating_plate-bonnet-on-pi.jpg)
 
 **Make sure the bonnet header is alligned correctly with the pins (no pins should remain outside of the bonnet header)**
 
-4. Connect the **6V power adapter** to the servo bonnet.
+7. Connect the **6V power adapter** to the servo bonnet.
 
 **NOTICE: The kit includes both a 6V power adapter and a 12V one. Do not use the 12V power adapter with the servo bonnet.**  
 
-4. Connect the SG92R motor to the bonnet. The dark (brown or black) wire should be on the side that says **G**.
-5. Mount the plate on the horns.
-6. Mount the puppet's body onto the plate. The body consists of a bottle that is tightened with screws.
+8. Puppets body is supposed to be screwed to the rotating plate with three M4 screws.
 
 ## Test
 The plate can be tested via the following script:
