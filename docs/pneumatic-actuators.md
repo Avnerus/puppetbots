@@ -35,17 +35,35 @@ Should be somthing like that in the end:
 
 ## Testing the balloon
 
-1. Connect the 10mm->2 x 6mm adapter to the compressor tube. 
+You can firstly test the balloon by blowing it up with your lungs. Make sure it's not leaking air noticeably.
 
-2. Connect one solenoid valve to one 6mm outlet, so all air goes to the second outlet.
+If it works, try testing it with compressor. Here is how it looks:
+![balloon_test-compressor.jpg](balloon_test-compressor.jpg)
 
-3. Connect the other outlet to the balloon.
+Make sure its release pipe is closed (valve handle should be perpendicular to the pipe)
+![balloon_test-compressor-exhaust.jpg](balloon_test-compressor-exhaust.jpg)
 
-4. Turn the compressor dial all the way anti-clockwise.
+There's a black knob in the center of the compressor that controls the output pressure.
+![balloon_test-knob.jpg](balloon_test-knob.jpg)
+Make sure it is rotated counter-clockwise maximally so we don't blow up the balloon.
 
-5. Turn on the compresor.
+Make sure a coupler like that (10mm to 2x6mm) is at the end of the compressor pipe:
+![balloon_test-connector-6x2.jpg](balloon_test-connector-6x2.jpg)
 
-6. Slowly turn the dial clockwise to inflate the balloon. It should inflate to a considerable size (about 5 times in volume) without leaking or exploding.
+If it's not take one from your kit and attach to it.
+
+Turn on compressor with a red lever on a side:
+![balloon_test-compressor-on-off.jpg](balloon_test-compressor-on-off.jpg)
+
+Cover one of the outputs with your finger and connect a pipe to the other output.
+
+Now you can slowly rotate black knob on compressor clockwise to add a bit of pressure.
+
+Be careful not to blow up the balloon ;)
+
+If it's not leaking, you're good!
+
+![balloon_test-test.jpg](balloon_test-test.jpg)
 
 ## Inserting the balooon.
 
