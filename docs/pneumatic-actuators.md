@@ -19,22 +19,19 @@ The final result looks like this:
 ## Preparing the balloon
 
 1. Cut two pieces of TPE, about `100mm x 300mm`.
-2. Fuse the two pieces using the heat sealer according to the following diagram:
-
+![preumatic_actuators-sheets.jpg](preumatic_actuators-sheets.jpg)
+2. You will need to fuse these pieces using the sealer. Set the sealer dial to number 6
+![preumatic_actuators-merging.jpg](preumatic_actuators-merging.jpg)
+![preumatic_actuators-burner.jpg](preumatic_actuators-burner.jpg)
+Sealing should be done according to this diagram:
 ![TPE diagram](tpe-diagram.jpg)
-
-- Turn the heat sealer dial to number `6`.
-- When sealing, apply pressure with your body onto the TPE for about `4 seconds`.
-
-3. Cut an opening for the tube as shown in the diagram.
-
+Should be somthing like that in the end:
+![preumatic_actuators-burned.jpg](preumatic_actuators-burned.jpg)
+3. Cut an opening for the tube and the edges of the balloon.
+![preumatic_actuators-balloon-flat.jpg](preumatic_actuators-balloon-flat.jpg)
 4. Insert a 6mm outer-diameter tube into the opening. Wrap the material of the 20mm tip around the tube and tighten it with a ziptie.
-
-5. Cut close to the edges of the seal to make the balloon as small as possible.
-
-The result should look like this:
-
-![TPE Balloon](tpe-balloon.jpg)
+![preumatic_actuators-ballon-with-pipe.jpg](preumatic_actuators-ballon-with-pipe.jpg)
+![preumatic_actuators-balloon-with-zipper.jpg](preumatic_actuators-balloon-with-zipper.jpg)
 
 ## Testing the balloon
 
