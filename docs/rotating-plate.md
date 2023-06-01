@@ -6,8 +6,8 @@ These are the pieces that you need on this stage:
 - SG92R servo motor
 Follow these steps:
 1. Screw SG92R to the base like on the photo below:
-![base with servo](rotating_plate-base-with-servo1.jpg)
-![base with servo](rotating_plate-base-with-servo2.jpg)
+![base with servo](rotating_plate-base-with-servo-1.jpg)
+![base with servo](rotating_plate-base-with-servo-2.jpg)
 2. In the same pocket where was SG92R there's a plastic horn that needs to be screwed to the servo
 ![horn connection](rotating_plate-base-with-cross.jpg)
 4. The flat rotating panel can be added on top of the base like that:
