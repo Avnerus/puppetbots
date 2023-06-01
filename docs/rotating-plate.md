@@ -11,7 +11,7 @@ Follow these steps:
 2. In the same pocket where was SG92R there's a plastic horn that needs to be screwed to the servo
 ![horn connection](rotating_plate-base-with-cross.jpg)
 4. The flat rotating panel can be added on top of the base like that:
-![base with plate](rotating_plate-with-plate.jpg)
+![base with plate](rotating_plate-base-with-plate.jpg)
 5. Find the Servo+PI Bonnet in the kit, it looks like that:
 ![servo bonnet](rotating_plate-bonnet.jpg)
 6. Connect the bonnet on top of the PI. Connect the servo to it:
