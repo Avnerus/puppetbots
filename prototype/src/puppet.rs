@@ -79,6 +79,27 @@ pub fn start(
         }).unwrap();           
     }
 
+    for customServo in &config.customServos {
+        println!("Creating custom servo {:?}", customServo.name);
+
+        let (custom_servo_tx, custom_servo_rx):
+            (mpsc::Sender<custom_servo::CustomServoMessage>, mpsc::Receiver<custom_servo::CustomServoMessage>) = mpsc::channel();
+
+        let mut custom_servo = CustomServo::new(
+            CustomServoProps {
+                name: custom_servo.name.clone(),
+                servo_index: custom_servo.servo_index,
+                interface: Arc::clone(&interface),
+                rx: custom_servo_rx,
+                tx: custom_servo_tx.clone()
+            }
+        );
+        actuators.insert(custom_servo.name.to_string(), custom_servo_tx);
+        thread::Builder::new().name(custom_servo.name.to_owned()).spawn(move || {
+            custom_servo.start();
+        }).unwrap();
+    }
+
     let mut orientation = Orientation::new(
         OrientationProps { 
             interface: Arc::clone(&interface),

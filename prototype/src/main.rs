@@ -38,12 +38,20 @@ pub struct ActuatorConfig {
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct CustomServoConfig {
+    name: String,
+    servo_id: u16
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
     server: ServerConfig,
     version: String,
     interface_type: String,
     orientation_servo: u16,   
-    actuators: Vec<ActuatorConfig>
+    actuators: Vec<ActuatorConfig>,
+    custom_servos: Vec<CustomServoConfig>,
 }
 
 fn read_config(config_file:String) -> Result<Config, Box<dyn std::error::Error>> {
